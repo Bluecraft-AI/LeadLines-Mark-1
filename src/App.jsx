@@ -43,7 +43,7 @@ function AppRoutes() {
         } 
       />
       <Route 
-        path="/workflow/:id" 
+        path="/jobpost" 
         element={
           <ProtectedRoute>
             <MainLayout><JobPostingForm /></MainLayout>
