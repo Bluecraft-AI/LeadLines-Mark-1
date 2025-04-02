@@ -45,7 +45,7 @@ const Home = () => {
   return (
     <div className="text-center">
       <h2 className="text-3xl font-bold text-text-dark mb-4">Welcome to LeadLines</h2>
-      <p className="text-text-dark mb-8">Powerful Campaigns Made In Seconds.</p>
+      <p className="text-text-dark mb-8">Powerful Campaigns Made For You In Seconds.</p>
       
       <div className="max-w-md mx-auto mb-12">
         <div className="card">
