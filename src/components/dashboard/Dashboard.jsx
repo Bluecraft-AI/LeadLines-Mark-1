@@ -42,7 +42,7 @@ const Dashboard = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-text-dark">Sales Workflows Dashboard</h2>
+        <h2 className="text-2xl font-bold text-text-dark">Workflow Dashboard</h2>
         <button 
           onClick={handleLogout}
           className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
@@ -67,7 +67,7 @@ const Dashboard = () => {
       </div>
 
       <div className="mb-6">
-        <h3 className="text-xl font-semibold text-text-dark mb-4">Available Sales Workflows</h3>
+        <h3 className="text-xl font-semibold text-text-dark mb-4">Available Workflows</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {workflows.map(workflow => (
             <div key={workflow.id} className="card hover:shadow-lg transition-shadow">
