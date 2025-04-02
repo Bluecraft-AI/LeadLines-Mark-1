@@ -45,7 +45,7 @@ const Home = () => {
   return (
     <div className="text-center">
       <h2 className="text-3xl font-bold text-text-dark mb-4">Welcome to LeadLines</h2>
-      <p className="text-text-dark mb-8">Your platform for automated sales workflows that generate leads and revenue.</p>
+      <p className="text-text-dark mb-8">Powerful Campaigns Made In Seconds.</p>
       
       <div className="max-w-md mx-auto mb-12">
         <div className="card">
@@ -133,7 +133,7 @@ const Home = () => {
       <div className="mt-8 bg-accent p-6 rounded-lg shadow-md max-w-4xl mx-auto">
         <h3 className="text-xl font-semibold text-text-dark mb-3">Why Choose LeadLines?</h3>
         <ul className="text-left text-text-dark space-y-2">
-          <li>✓ Access proven sales workflows that generate leads and revenue</li>
+          <li>✓ Access proven sales workflows that generate leads and campaigns</li>
           <li>✓ Real-time cost estimation before launching campaigns</li>
           <li>✓ Target the perfect audience for your services</li>
           <li>✓ Save time with automated lead generation processes</li>
