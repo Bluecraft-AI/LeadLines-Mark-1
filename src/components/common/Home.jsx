@@ -131,7 +131,7 @@ const Home = () => {
       </div>
       
       <div className="mt-8 bg-accent p-6 rounded-lg shadow-md max-w-4xl mx-auto">
-        <h3 className="text-xl font-semibold text-text-dark mb-3">Why Choose LeadLines?</h3>
+        <h3 className="text-xl font-semibold text-text-dark mb-3">Harness The Power</h3>
         <ul className="text-left text-text-dark space-y-2">
           <li>✓ Access proven sales workflows that generate leads and campaigns</li>
           <li>✓ Real-time cost estimation before launching campaigns</li>
