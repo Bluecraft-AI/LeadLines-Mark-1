@@ -31,8 +31,8 @@ const MainLayout = ({ children }) => {
               <ul className="flex space-x-4">
                 {currentUser ? (
                   <>
-                    <li><Link to="/submissions" className="hover:text-accent transition-colors">Submissions</Link></li>
                     <li><Link to="/dashboard" className="hover:text-accent transition-colors">Dashboard</Link></li>
+                    <li><Link to="/submissions" className="hover:text-accent transition-colors">Submissions</Link></li>
                     <li><Link to="/profile" className="hover:text-accent transition-colors">Profile</Link></li>
                   </>
                 ) : (
