@@ -10,8 +10,8 @@ const MainLayout = ({ children }) => {
   const isHomePage = location.pathname === '/';
   const isRegisterPage = location.pathname === '/register';
   
-  // Only show navigation links if user is logged in or not on home/register page
-  const showNavLinks = currentUser || (!isHomePage && !isRegisterPage);
+  // Only show navigation links if user is logged in
+  const showNavLinks = currentUser;
 
   const handleLogout = async () => {
     try {
@@ -29,17 +29,9 @@ const MainLayout = ({ children }) => {
           {showNavLinks && (
             <nav>
               <ul className="flex space-x-4">
-                {currentUser ? (
-                  <>
-                    <li><Link to="/dashboard" className="hover:text-accent transition-colors">Dashboard</Link></li>
-                    <li><Link to="/submissions" className="hover:text-accent transition-colors">Submissions</Link></li>
-                    <li><Link to="/profile" className="hover:text-accent transition-colors">Profile</Link></li>
-                  </>
-                ) : (
-                  <>
-                    <li><Link to="/" className="hover:text-accent transition-colors">Home</Link></li>
-                  </>
-                )}
+                <li><Link to="/dashboard" className="hover:text-accent transition-colors">Dashboard</Link></li>
+                <li><Link to="/submissions" className="hover:text-accent transition-colors">Submissions</Link></li>
+                <li><Link to="/profile" className="hover:text-accent transition-colors">Profile</Link></li>
               </ul>
             </nav>
           )}
