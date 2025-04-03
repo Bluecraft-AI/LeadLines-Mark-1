@@ -12,14 +12,29 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userSettings, setUserSettings] = useState({});
 
   // Sign up function
   const signup = async (email, password) => {
     // This would be replaced with actual Firebase authentication
     console.log('Signup with:', email, password);
     // Simulate successful signup
-    setCurrentUser({ email });
-    return { email };
+    const newUser = { email, uid: `user-${Date.now()}` };
+    setCurrentUser(newUser);
+    
+    // Initialize user settings
+    setUserSettings({
+      [newUser.uid]: {
+        integrations: {
+          instantly: {
+            apiKey: '',
+            isConnected: false
+          }
+        }
+      }
+    });
+    
+    return newUser;
   };
 
   // Login function
@@ -27,8 +42,30 @@ export const AuthProvider = ({ children }) => {
     // This would be replaced with actual Firebase authentication
     console.log('Login with:', email, password);
     // Simulate successful login
-    setCurrentUser({ email });
-    return { email };
+    const user = { email, uid: `user-${email.replace(/[^a-zA-Z0-9]/g, '')}` };
+    setCurrentUser(user);
+    
+    // Load user settings from localStorage
+    const savedSettings = localStorage.getItem(`user_settings_${user.uid}`);
+    if (savedSettings) {
+      setUserSettings(JSON.parse(savedSettings));
+    } else {
+      // Initialize settings if not found
+      const initialSettings = {
+        [user.uid]: {
+          integrations: {
+            instantly: {
+              apiKey: '',
+              isConnected: false
+            }
+          }
+        }
+      };
+      setUserSettings(initialSettings);
+      localStorage.setItem(`user_settings_${user.uid}`, JSON.stringify(initialSettings));
+    }
+    
+    return user;
   };
 
   // Logout function
@@ -36,6 +73,26 @@ export const AuthProvider = ({ children }) => {
     // This would be replaced with actual Firebase authentication
     console.log('Logging out');
     setCurrentUser(null);
+    setUserSettings({});
+  };
+
+  // Update user settings
+  const updateUserSettings = (settings) => {
+    if (!currentUser) return;
+    
+    const updatedSettings = {
+      ...userSettings,
+      [currentUser.uid]: settings
+    };
+    
+    setUserSettings(updatedSettings);
+    localStorage.setItem(`user_settings_${currentUser.uid}`, JSON.stringify(updatedSettings));
+  };
+
+  // Get current user settings
+  const getUserSettings = () => {
+    if (!currentUser || !userSettings[currentUser.uid]) return null;
+    return userSettings[currentUser.uid];
   };
 
   // Effect for initializing auth state
@@ -57,7 +114,9 @@ export const AuthProvider = ({ children }) => {
     signup,
     login,
     logout,
-    loading
+    loading,
+    updateUserSettings,
+    getUserSettings
   };
 
   return (

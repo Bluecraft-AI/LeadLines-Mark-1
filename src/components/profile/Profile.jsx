@@ -2,11 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Profile = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, getUserSettings, updateUserSettings } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   
-  // Mock user data - in a real app, this would come from a database
+  // Get user settings from context
+  const userSettings = getUserSettings() || {
+    integrations: {
+      instantly: {
+        apiKey: '',
+        isConnected: false
+      }
+    }
+  };
+  
+  // Local state for user data
   const [userData, setUserData] = useState({
     name: 'John Doe',
     email: currentUser?.email || 'john.doe@example.com',
@@ -18,7 +28,7 @@ const Profile = () => {
       browser: false,
       mobile: true
     },
-    integrations: {
+    integrations: userSettings.integrations || {
       instantly: {
         apiKey: '',
         isConnected: false
@@ -26,22 +36,20 @@ const Profile = () => {
     }
   });
 
-  // Load saved API key from localStorage on component mount
+  // Update local state when user settings change
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('instantly_api_key');
-    if (savedApiKey) {
+    if (userSettings) {
       setUserData(prevData => ({
         ...prevData,
-        integrations: {
-          ...prevData.integrations,
+        integrations: userSettings.integrations || {
           instantly: {
-            apiKey: savedApiKey,
-            isConnected: true
+            apiKey: '',
+            isConnected: false
           }
         }
       }));
     }
-  }, []);
+  }, [userSettings]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,27 +92,38 @@ const Profile = () => {
   };
 
   const handleSaveApiKey = () => {
-    // Save API key to localStorage
-    localStorage.setItem('instantly_api_key', userData.integrations.instantly.apiKey);
-    
-    setUserData({
-      ...userData,
+    // Save API key to user settings
+    const updatedSettings = {
+      ...userSettings,
       integrations: {
-        ...userData.integrations,
+        ...userSettings.integrations,
         instantly: {
-          ...userData.integrations.instantly,
+          apiKey: userData.integrations.instantly.apiKey,
           isConnected: true
         }
       }
-    });
+    };
     
-    console.log('Saving Instantly API key:', userData.integrations.instantly.apiKey);
+    updateUserSettings(updatedSettings);
+    
+    console.log('Saving Instantly API key for user:', currentUser?.email);
     setIsEditingApiKey(false);
   };
 
   const handleDisconnectInstantly = () => {
-    // Remove API key from localStorage
-    localStorage.removeItem('instantly_api_key');
+    // Remove API key from user settings
+    const updatedSettings = {
+      ...userSettings,
+      integrations: {
+        ...userSettings.integrations,
+        instantly: {
+          apiKey: '',
+          isConnected: false
+        }
+      }
+    };
+    
+    updateUserSettings(updatedSettings);
     
     setUserData({
       ...userData,
@@ -117,7 +136,7 @@ const Profile = () => {
       }
     });
     
-    console.log('Disconnected Instantly integration');
+    console.log('Disconnected Instantly integration for user:', currentUser?.email);
   };
 
   return (
@@ -262,7 +281,7 @@ const Profile = () => {
         </form>
       </div>
 
-      {/* New Integrations Section */}
+      {/* Integrations Section */}
       <div className="mt-8">
         <h3 className="text-xl font-semibold text-text-dark mb-4">Integrations</h3>
         <div className="card">

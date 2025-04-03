@@ -5,7 +5,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MainLayout from './components/common/MainLayout';
 
 // Page Components
-import Home from './components/common/Home';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Dashboard from './components/dashboard/Dashboard';
@@ -33,8 +32,8 @@ const ProtectedRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+      {/* Public Routes - Login is now the main landing page */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
       <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
       
