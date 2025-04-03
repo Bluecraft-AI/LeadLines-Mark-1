@@ -94,23 +94,27 @@ const Dashboard = () => {
         <h3 className="text-xl font-semibold text-text-dark mb-4">Available Workflows</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {workflows.map(workflow => (
-            <div key={workflow.id} className="card hover:shadow-lg transition-shadow">
-              <h4 className="text-lg font-semibold text-text-dark mb-2">{workflow.title}</h4>
-              <p className="text-gray-600 mb-4">{workflow.description}</p>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm text-gray-500">Leads: {workflow.leads}</span>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  workflow.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {workflow.status}
-                </span>
+            <div key={workflow.id} className="card hover:shadow-lg transition-shadow flex flex-col h-full">
+              <div className="flex-grow">
+                <h4 className="text-lg font-semibold text-text-dark mb-2">{workflow.title}</h4>
+                <p className="text-gray-600 mb-4">{workflow.description}</p>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm text-gray-500">Leads: {workflow.leads}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    workflow.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {workflow.status}
+                  </span>
+                </div>
               </div>
-              <Link 
-                to={`/workflow/${workflow.id}`} 
-                className="btn-primary w-full block text-center"
-              >
-                Select Workflow
-              </Link>
+              <div className="mt-auto pt-4">
+                <Link 
+                  to={`/workflow/${workflow.id}`} 
+                  className="btn-primary w-full block text-center"
+                >
+                  Select Workflow
+                </Link>
+              </div>
             </div>
           ))}
         </div>
