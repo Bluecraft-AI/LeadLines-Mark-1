@@ -1,15 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import UserService from '../../services/UserService';
 
 const Profile = () => {
   const { currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [isApiEditing, setIsApiEditing] = useState(false);
-  const [instantlyApiKey, setInstantlyApiKey] = useState('');
-  const [apiKeyLoading, setApiKeyLoading] = useState(false);
-  const [apiKeySaved, setApiKeySaved] = useState(false);
-  const [apiKeyError, setApiKeyError] = useState(null);
   
   // Mock user data - in a real app, this would come from a database
   const [userData, setUserData] = useState({
@@ -24,28 +18,6 @@ const Profile = () => {
       mobile: true
     }
   });
-
-  // Load Instantly API key on component mount
-  useEffect(() => {
-    if (currentUser) {
-      loadInstantlyApiKey();
-    }
-  }, [currentUser]);
-
-  const loadInstantlyApiKey = async () => {
-    try {
-      setApiKeyLoading(true);
-      const apiKey = await UserService.getInstantlyApiKey(currentUser.uid);
-      if (apiKey) {
-        // For security, we don't show the full API key, just a masked version
-        setInstantlyApiKey('•'.repeat(20) + apiKey.slice(-4));
-      }
-    } catch (err) {
-      console.error('Error loading API key:', err);
-    } finally {
-      setApiKeyLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,36 +43,6 @@ const Profile = () => {
     // In a real app, this would save to a database
     console.log('Saving profile data:', userData);
     setIsEditing(false);
-  };
-
-  const handleApiKeyChange = (e) => {
-    setInstantlyApiKey(e.target.value);
-  };
-
-  const handleApiKeySubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setApiKeyLoading(true);
-      setApiKeyError(null);
-      
-      await UserService.saveInstantlyApiKey(currentUser.uid, instantlyApiKey);
-      
-      setApiKeySaved(true);
-      setIsApiEditing(false);
-      
-      // Reset success message after 3 seconds
-      setTimeout(() => {
-        setApiKeySaved(false);
-      }, 3000);
-      
-      // Reload the API key (masked version)
-      await loadInstantlyApiKey();
-    } catch (err) {
-      console.error('Error saving API key:', err);
-      setApiKeyError('Failed to save API key. Please try again.');
-    } finally {
-      setApiKeyLoading(false);
-    }
   };
 
   return (
@@ -243,93 +185,6 @@ const Profile = () => {
             </div>
           )}
         </form>
-      </div>
-
-      <div className="mt-8">
-        <h3 className="text-xl font-semibold text-text-dark mb-4">API Integrations</h3>
-        <div className="card">
-          <div className="mb-4">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h4 className="text-lg font-medium text-text-dark">Instantly.ai API Key</h4>
-                <p className="text-gray-600 mb-3">
-                  Connect your Instantly.ai account to enable campaign management within LeadLines.
-                  {!instantlyApiKey && !isApiEditing && (
-                    <span className="block mt-1 text-red-500">
-                      No API key found. Add your key to use Instantly features.
-                    </span>
-                  )}
-                </p>
-              </div>
-              {!isApiEditing && (
-                <button 
-                  onClick={() => setIsApiEditing(true)}
-                  className="btn-secondary"
-                >
-                  {instantlyApiKey ? 'Update Key' : 'Add Key'}
-                </button>
-              )}
-            </div>
-            
-            {!isApiEditing && instantlyApiKey && (
-              <div className="bg-gray-100 p-3 rounded-md flex items-center justify-between">
-                <span className="font-mono">{instantlyApiKey}</span>
-              </div>
-            )}
-            
-            {isApiEditing && (
-              <form onSubmit={handleApiKeySubmit} className="mt-4">
-                <div className="mb-4">
-                  <label htmlFor="instantlyApiKey" className="block text-text-dark mb-1">
-                    Instantly.ai API Key
-                  </label>
-                  <input
-                    type="password"
-                    id="instantlyApiKey"
-                    value={instantlyApiKey}
-                    onChange={handleApiKeyChange}
-                    placeholder="Enter your Instantly.ai API key"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    You can find your API key in your Instantly.ai account settings
-                  </p>
-                </div>
-                
-                {apiKeyError && (
-                  <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    {apiKeyError}
-                  </div>
-                )}
-                
-                {apiKeySaved && (
-                  <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    API key saved successfully!
-                  </div>
-                )}
-                
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsApiEditing(false)}
-                    className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
-                    disabled={apiKeyLoading}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={apiKeyLoading}
-                  >
-                    {apiKeyLoading ? 'Saving...' : 'Save API Key'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
       </div>
 
       <div className="mt-8">
