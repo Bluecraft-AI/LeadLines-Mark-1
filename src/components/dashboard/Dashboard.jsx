@@ -42,7 +42,7 @@ const Dashboard = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-text-dark">Workflow Dashboard</h2>
+        <h2 className="text-2xl font-bold text-text-dark">Dashboard</h2>
         <button 
           onClick={handleLogout}
           className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
