@@ -13,8 +13,10 @@
   "license": "ISC",
   "description": "LeadLines Portal - A platform for efficient job posting and candidate management",
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "airtable": "^0.12.2",
     "axios": "^1.6.2",
-    "firebase": "^10.7.0",
+    "firebase": "^10.14.1",
     "formik": "^2.4.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

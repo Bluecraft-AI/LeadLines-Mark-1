@@ -39,6 +39,10 @@ const Dashboard = () => {
     }
   };
 
+  const handleInstantlyRedirect = () => {
+    window.open('https://app.instantly.ai/app/dashboard', '_blank');
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -52,18 +56,38 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="card bg-secondary text-text-light">
-          <h3 className="text-xl font-semibold mb-2">Active Workflows</h3>
-          <p className="text-3xl font-bold">2</p>
-        </div>
-        <div className="card bg-accent text-text-dark">
-          <h3 className="text-xl font-semibold mb-2">Total Leads Generated</h3>
-          <p className="text-3xl font-bold">264</p>
-        </div>
-        <div className="card bg-primary text-text-dark border border-gray-200">
-          <h3 className="text-xl font-semibold mb-2">Conversion Rate</h3>
-          <p className="text-3xl font-bold">8.7%</p>
-        </div>
+        <button 
+          onClick={handleInstantlyRedirect}
+          className="card bg-secondary text-text-light hover:bg-secondary-dark transition-colors flex flex-col items-center justify-center cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          <h3 className="text-xl font-semibold mb-1">Access Instantly Account</h3>
+          <p className="text-sm text-center">Open your Instantly dashboard in a new tab</p>
+        </button>
+
+        <Link 
+          to="/email-submission" 
+          className="card bg-accent text-text-dark hover:bg-accent-dark transition-colors flex flex-col items-center justify-center cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <h3 className="text-xl font-semibold mb-1">Email Account Submission</h3>
+          <p className="text-sm text-center">Submit your email account details</p>
+        </Link>
+
+        <Link 
+          to="/schedule-call" 
+          className="card bg-primary text-text-dark border border-gray-200 hover:bg-primary-dark transition-colors flex flex-col items-center justify-center cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <h3 className="text-xl font-semibold mb-1">Schedule a Call</h3>
+          <p className="text-sm text-center">Book a consultation with our team</p>
+        </Link>
       </div>
 
       <div className="mb-6">
@@ -89,71 +113,6 @@ const Dashboard = () => {
               </Link>
             </div>
           ))}
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold text-text-dark mb-4">Your Recent Campaigns</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-md">
-            <thead className="bg-gray-100 text-text-dark">
-              <tr>
-                <th className="py-3 px-4 text-left">Campaign Name</th>
-                <th className="py-3 px-4 text-left">Workflow</th>
-                <th className="py-3 px-4 text-left">Leads</th>
-                <th className="py-3 px-4 text-left">Status</th>
-                <th className="py-3 px-4 text-left">Created</th>
-                <th className="py-3 px-4 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-4">Tech Startups Outreach</td>
-                <td className="py-3 px-4">Job Posting Campaign</td>
-                <td className="py-3 px-4">42</td>
-                <td className="py-3 px-4">
-                  <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </td>
-                <td className="py-3 px-4">2025-03-28</td>
-                <td className="py-3 px-4">
-                  <button className="text-secondary hover:text-opacity-80 mr-2">View</button>
-                  <button className="text-red-500 hover:text-opacity-80">Pause</button>
-                </td>
-              </tr>
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-4">SaaS Decision Makers</td>
-                <td className="py-3 px-4">LinkedIn Sales Navigator</td>
-                <td className="py-3 px-4">35</td>
-                <td className="py-3 px-4">
-                  <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </td>
-                <td className="py-3 px-4">2025-03-30</td>
-                <td className="py-3 px-4">
-                  <button className="text-secondary hover:text-opacity-80 mr-2">View</button>
-                  <button className="text-red-500 hover:text-opacity-80">Pause</button>
-                </td>
-              </tr>
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-4">Marketing Agencies</td>
-                <td className="py-3 px-4">Conference Attendees</td>
-                <td className="py-3 px-4">28</td>
-                <td className="py-3 px-4">
-                  <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                    Paused
-                  </span>
-                </td>
-                <td className="py-3 px-4">2025-03-25</td>
-                <td className="py-3 px-4">
-                  <button className="text-secondary hover:text-opacity-80 mr-2">View</button>
-                  <button className="text-green-500 hover:text-opacity-80">Resume</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
