@@ -28,6 +28,54 @@ const Dashboard = () => {
       leads: 53,
       status: 'Paused',
       createdAt: '2025-03-25'
+    },
+    {
+      id: 1,
+      title: 'Job Posting Campaign',
+      description: 'Find companies with active job postings and target them with your services',
+      leads: 124,
+      status: 'Active',
+      createdAt: '2025-03-28'
+    },
+    {
+      id: 2,
+      title: 'LinkedIn Sales Navigator',
+      description: 'Target decision makers based on LinkedIn profile criteria',
+      leads: 87,
+      status: 'Active',
+      createdAt: '2025-03-30'
+    },
+    {
+      id: 3,
+      title: 'Conference Attendees',
+      description: 'Reach out to attendees of industry conferences and events',
+      leads: 53,
+      status: 'Paused',
+      createdAt: '2025-03-25'
+    },
+    {
+      id: 1,
+      title: 'Job Posting Campaign',
+      description: 'Find companies with active job postings and target them with your services',
+      leads: 124,
+      status: 'Active',
+      createdAt: '2025-03-28'
+    },
+    {
+      id: 2,
+      title: 'LinkedIn Sales Navigator',
+      description: 'Target decision makers based on LinkedIn profile criteria',
+      leads: 87,
+      status: 'Active',
+      createdAt: '2025-03-30'
+    },
+    {
+      id: 3,
+      title: 'Conference Attendees',
+      description: 'Reach out to attendees of industry conferences and events',
+      leads: 53,
+      status: 'Paused',
+      createdAt: '2025-03-25'
     }
   ]);
 
