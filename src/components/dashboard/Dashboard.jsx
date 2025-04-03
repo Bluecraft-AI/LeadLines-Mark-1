@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import AirtableService from '../../services/AirtableService';
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -9,27 +10,74 @@ const Dashboard = () => {
       id: 1,
       title: 'Job Posting Campaign',
       description: 'Find companies with active job postings and target them with your services',
-      leads: 124,
-      status: 'Active',
+      submissions: 0,
+      hasProcessing: false,
       createdAt: '2025-03-28'
     },
     {
       id: 2,
       title: 'LinkedIn Sales Navigator',
       description: 'Target decision makers based on LinkedIn profile criteria',
-      leads: 87,
-      status: 'Active',
+      submissions: 0,
+      hasProcessing: false,
       createdAt: '2025-03-30'
     },
     {
       id: 3,
       title: 'Conference Attendees',
       description: 'Reach out to attendees of industry conferences and events',
-      leads: 53,
-      status: 'Paused',
+      submissions: 0,
+      hasProcessing: false,
       createdAt: '2025-03-25'
     }
   ]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch submissions data and update workflow cards
+  useEffect(() => {
+    const fetchSubmissionsData = async () => {
+      if (!currentUser) return;
+      
+      try {
+        setLoading(true);
+        const allSubmissions = await AirtableService.getSubmissions('Filter_Submissions', currentUser.uid);
+        
+        // Update workflows with submission counts and processing status
+        const updatedWorkflows = workflows.map(workflow => {
+          // Filter submissions for this workflow
+          const workflowSubmissions = allSubmissions.filter(
+            submission => submission.workflow_id === workflow.id || 
+                         (submission.workflow_type && submission.workflow_type.includes(workflow.title))
+          );
+          
+          // Check if any submissions are in "Processing" status
+          const hasProcessingSubmissions = workflowSubmissions.some(
+            submission => submission.status === 'Processing'
+          );
+          
+          return {
+            ...workflow,
+            submissions: workflowSubmissions.length,
+            hasProcessing: hasProcessingSubmissions
+          };
+        });
+        
+        setWorkflows(updatedWorkflows);
+      } catch (error) {
+        console.error('Error fetching submissions data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSubmissionsData();
+    
+    // Set up interval to refresh data every 30 seconds
+    const intervalId = setInterval(fetchSubmissionsData, 30000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [currentUser]);
 
   const handleLogout = async () => {
     try {
@@ -92,32 +140,38 @@ const Dashboard = () => {
 
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-text-dark mb-4">Available Workflows</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workflows.map(workflow => (
-            <div key={workflow.id} className="card hover:shadow-lg transition-shadow flex flex-col h-full">
-              <div className="flex-grow">
-                <h4 className="text-lg font-semibold text-text-dark mb-2">{workflow.title}</h4>
-                <p className="text-gray-600 mb-4">{workflow.description}</p>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm text-gray-500">Leads: {workflow.leads}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    workflow.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {workflow.status}
-                  </span>
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-secondary"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {workflows.map(workflow => (
+              <div key={workflow.id} className="card hover:shadow-lg transition-shadow flex flex-col h-full">
+                <div className="flex-grow">
+                  <h4 className="text-lg font-semibold text-text-dark mb-2">{workflow.title}</h4>
+                  <p className="text-gray-600 mb-4">{workflow.description}</p>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm text-gray-500">Submissions: {workflow.submissions}</span>
+                    {workflow.hasProcessing && (
+                      <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                        Processing
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-auto pt-4">
+                  <Link 
+                    to={`/workflow/${workflow.id}`} 
+                    className="btn-primary w-full block text-center"
+                  >
+                    Select Workflow
+                  </Link>
                 </div>
               </div>
-              <div className="mt-auto pt-4">
-                <Link 
-                  to={`/workflow/${workflow.id}`} 
-                  className="btn-primary w-full block text-center"
-                >
-                  Select Workflow
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
