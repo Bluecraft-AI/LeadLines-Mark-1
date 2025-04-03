@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Profile = () => {
   const { currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   
   // Mock user data - in a real app, this would come from a database
   const [userData, setUserData] = useState({
@@ -16,14 +17,51 @@ const Profile = () => {
       email: true,
       browser: false,
       mobile: true
+    },
+    integrations: {
+      instantly: {
+        apiKey: '',
+        isConnected: false
+      }
     }
   });
+
+  // Load saved API key from localStorage on component mount
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('instantly_api_key');
+    if (savedApiKey) {
+      setUserData(prevData => ({
+        ...prevData,
+        integrations: {
+          ...prevData.integrations,
+          instantly: {
+            apiKey: savedApiKey,
+            isConnected: true
+          }
+        }
+      }));
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserData({
       ...userData,
       [name]: value
+    });
+  };
+
+  const handleApiKeyChange = (e) => {
+    const { value } = e.target;
+    setUserData({
+      ...userData,
+      integrations: {
+        ...userData.integrations,
+        instantly: {
+          ...userData.integrations.instantly,
+          apiKey: value
+        }
+      }
     });
   };
 
@@ -43,6 +81,43 @@ const Profile = () => {
     // In a real app, this would save to a database
     console.log('Saving profile data:', userData);
     setIsEditing(false);
+  };
+
+  const handleSaveApiKey = () => {
+    // Save API key to localStorage
+    localStorage.setItem('instantly_api_key', userData.integrations.instantly.apiKey);
+    
+    setUserData({
+      ...userData,
+      integrations: {
+        ...userData.integrations,
+        instantly: {
+          ...userData.integrations.instantly,
+          isConnected: true
+        }
+      }
+    });
+    
+    console.log('Saving Instantly API key:', userData.integrations.instantly.apiKey);
+    setIsEditingApiKey(false);
+  };
+
+  const handleDisconnectInstantly = () => {
+    // Remove API key from localStorage
+    localStorage.removeItem('instantly_api_key');
+    
+    setUserData({
+      ...userData,
+      integrations: {
+        ...userData.integrations,
+        instantly: {
+          apiKey: '',
+          isConnected: false
+        }
+      }
+    });
+    
+    console.log('Disconnected Instantly integration');
   };
 
   return (
@@ -185,6 +260,86 @@ const Profile = () => {
             </div>
           )}
         </form>
+      </div>
+
+      {/* New Integrations Section */}
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold text-text-dark mb-4">Integrations</h3>
+        <div className="card">
+          <div className="mb-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="text-lg font-medium text-text-dark mb-2">Instantly.ai</h4>
+                <p className="text-gray-600 mb-3">Connect your Instantly.ai account to enable campaign automation.</p>
+              </div>
+              <div className="flex items-center">
+                {userData.integrations.instantly.isConnected && (
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs mr-3">
+                    Connected
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {isEditingApiKey ? (
+              <div className="mt-3">
+                <label className="block text-text-dark mb-1">API Key</label>
+                <div className="flex">
+                  <input
+                    type="password"
+                    value={userData.integrations.instantly.apiKey}
+                    onChange={handleApiKeyChange}
+                    placeholder="Enter your Instantly API key"
+                    className="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveApiKey}
+                    className="px-4 py-2 bg-secondary text-white rounded-r-md hover:bg-secondary-dark transition-colors"
+                  >
+                    Save
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  You can find your API key in your Instantly.ai account settings.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingApiKey(false)}
+                  className="mt-2 text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex space-x-3">
+                {userData.integrations.instantly.isConnected ? (
+                  <>
+                    <button
+                      onClick={() => setIsEditingApiKey(true)}
+                      className="btn-secondary"
+                    >
+                      Update API Key
+                    </button>
+                    <button
+                      onClick={handleDisconnectInstantly}
+                      className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setIsEditingApiKey(true)}
+                    className="btn-secondary"
+                  >
+                    Connect Instantly
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="mt-8">
