@@ -43,18 +43,13 @@ const Login = () => {
   };
 
   return (
-    <div>
-      {/* Welcome Section */}
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-text-dark mb-4">Welcome to LeadLines</h2>
-        <p className="text-text-dark mb-8">Your platform for efficient job posting and candidate management.</p>
-      </div>
+    <div className="text-center">
+      <h2 className="text-3xl font-bold text-text-dark mb-4">Welcome to LeadLines</h2>
+      <p className="text-text-dark mb-8">Powerful Campaigns Made For You In Seconds.</p>
       
-      {/* Login Form and Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {/* Login Form */}
+      <div className="max-w-md mx-auto mb-12">
         <div className="card">
-          <h3 className="text-xl font-semibold text-text-dark mb-4 text-center">Log In to Your Account</h3>
+          <h3 className="text-xl font-semibold text-text-dark mb-4">Log In to Your Account</h3>
           
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
@@ -69,7 +64,7 @@ const Login = () => {
           >
             {({ isSubmitting }) => (
               <Form className="space-y-4">
-                <div>
+                <div className="text-left">
                   <label htmlFor="email" className="block text-text-dark mb-1">Email</label>
                   <Field
                     type="email"
@@ -81,7 +76,7 @@ const Login = () => {
                   <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
                 
-                <div>
+                <div className="text-left">
                   <label htmlFor="password" className="block text-text-dark mb-1">Password</label>
                   <Field
                     type="password"
@@ -108,7 +103,7 @@ const Login = () => {
                   
                   <div className="text-sm">
                     <a href="#" className="text-secondary hover:text-opacity-80">
-                      Forgot your password?
+                      Forgot password?
                     </a>
                   </div>
                 </div>
@@ -133,38 +128,15 @@ const Login = () => {
             </p>
           </div>
         </div>
-        
-        {/* Features Card */}
-        <div className="card">
-          <h3 className="text-xl font-semibold text-text-dark mb-3">Post Job Opportunities</h3>
-          <p className="text-text-dark mb-4">Create detailed job postings that reach the right audience and attract qualified applicants.</p>
-          
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium text-text-dark">Find Qualified Candidates</h4>
-              <p className="text-sm text-text-dark">Use our advanced filtering system to discover the perfect candidates for your job openings.</p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-text-dark">Real-time Analytics</h4>
-              <p className="text-sm text-text-dark">Track the performance of your job postings and optimize your recruitment strategy.</p>
-            </div>
-          </div>
-          
-          <div className="mt-6">
-            <Link to="/register" className="btn-secondary inline-block w-full text-center">Create Account</Link>
-          </div>
-        </div>
       </div>
       
-      {/* Why Choose LeadLines Section */}
-      <div className="mt-12 bg-accent p-6 rounded-lg shadow-md max-w-4xl mx-auto">
-        <h3 className="text-xl font-semibold text-text-dark mb-3">Why Choose LeadLines?</h3>
+      <div className="mt-8 bg-accent p-6 rounded-lg shadow-md max-w-4xl mx-auto">
+        <h3 className="text-xl font-semibold text-text-dark mb-3">Harness The Power</h3>
         <ul className="text-left text-text-dark space-y-2">
-          <li>✓ Streamlined candidate discovery process</li>
-          <li>✓ Real-time cost estimation for job postings</li>
-          <li>✓ Integration with leading job platforms</li>
-          <li>✓ Advanced filtering and matching algorithms</li>
+          <li>✓ Access proven sales workflows that generate leads and campaigns</li>
+          <li>✓ Real-time cost estimation before launching campaigns</li>
+          <li>✓ Target the perfect audience for your services</li>
+          <li>✓ Save time with automated lead generation processes</li>
         </ul>
       </div>
     </div>
