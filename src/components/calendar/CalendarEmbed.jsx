@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const CalendarEmbed = () => {
   const [isLoading, setIsLoading] = useState(true);
-
+  
+  // Define the Go High Level calendar embed URL
+  const calendarUrl = 'https://form.bluecraft.ai/widget/booking/etmgsLRR2wxNiCSlJiI1';
+  
+  // Handle iframe load event
   const handleIframeLoad = () => {
     setIsLoading(false);
   };
+  
+  // Load the Go High Level script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://form.bluecraft.ai/js/form_embed.js';
+    script.type = 'text/javascript';
+    script.async = true;
+    document.body.appendChild(script);
+    
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -25,35 +42,26 @@ const CalendarEmbed = () => {
         )}
         
         <div className={`calendar-container ${isLoading ? 'hidden' : 'block'}`}>
-          {/* 
-            CALENDAR EMBED INSTRUCTIONS:
-            
-            1. In your Go High-Level account, go to "Calendars" > "Calendar Settings"
-            2. For your specific calendar, click the "three dots" icon and select "Share"
-            3. In the pop-up modal, select the "Embed Code" tab and copy the iframe src URL
-            4. Replace the placeholder URL below with your calendar embed URL
-          */}
           <iframe 
-            src="about:blank" 
-            width="100%" 
-            height="700" 
-            frameBorder="0" 
+            src={calendarUrl}
+            style={{ width: '100%', border: 'none', overflow: 'hidden' }}
+            scrolling="no"
+            id="etmgsLRR2wxNiCSlJiI1_1743733381977"
             onLoad={handleIframeLoad}
             title="Schedule a Call"
-            className="w-full"
+            height="700"
           ></iframe>
         </div>
       </div>
       
       <div className="mt-6 bg-blue-50 p-4 rounded-md border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">How to Add Your Calendar</h3>
-        <ol className="list-decimal pl-5 space-y-2 text-blue-800">
-          <li>In your Go High-Level account, go to &quot;Calendars&quot; &gt; &quot;Calendar Settings&quot;</li>
-          <li>For your specific calendar, click the &quot;three dots&quot; icon and select &quot;Share&quot;</li>
-          <li>In the pop-up modal, select the &quot;Embed Code&quot; tab and copy the iframe src URL</li>
-          <li>Open the file: <code className="bg-blue-100 px-2 py-1 rounded">/src/components/calendar/CalendarEmbed.jsx</code></li>
-          <li>Replace the placeholder URL in the iframe src attribute with your calendar embed URL</li>
-        </ol>
+        <h3 className="text-lg font-semibold text-blue-800 mb-2">Calendar Successfully Integrated</h3>
+        <p className="text-blue-800">
+          Your Go High Level calendar has been successfully integrated. Users can now schedule calls using this interface.
+        </p>
+        <p className="text-blue-800 mt-2">
+          Calendar URL: <code className="bg-blue-100 px-2 py-1 rounded">{calendarUrl}</code>
+        </p>
       </div>
     </div>
   );
