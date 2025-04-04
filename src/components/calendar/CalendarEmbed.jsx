@@ -47,7 +47,7 @@ const CalendarEmbed = () => {
       <div style={{ 
         lineHeight: 0, // Removes white space caused by line height
         fontSize: 0,   // Removes white space caused by font size
-        marginTop: '-5px' // Slight negative margin to position calendar closer to text
+        marginTop: '-30px' // Slight negative margin to position calendar closer to text
       }}>
         <iframe 
           src={calendarUrl}
