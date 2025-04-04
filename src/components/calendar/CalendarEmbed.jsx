@@ -29,14 +29,15 @@ const CalendarEmbed = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-2">
+      {/* Added padding-bottom to ensure text doesn't get covered */}
+      <div className="flex justify-between items-center pb-8">
         <h2 className="text-2xl font-bold text-text-dark">Schedule a Call</h2>
         <Link to="/dashboard" className="text-secondary hover:text-secondary-dark">
           Back to Dashboard
         </Link>
       </div>
 
-      {/* Added negative margin to reduce space between heading and calendar */}
+      {/* Added negative margin but increased the value to maintain calendar position */}
       <div className="relative mt-[-20px]" style={{ backgroundColor: bgColor }}>
         {/* Loading area with background color matching the page */}
         {isLoading && (
