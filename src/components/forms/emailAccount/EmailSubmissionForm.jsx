@@ -110,9 +110,6 @@ const EmailSubmissionForm = () => {
     <div className="max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-text-dark">Email Account Submission</h2>
-        <Link to="/dashboard" className="text-secondary hover:text-secondary-dark">
-          Back to Dashboard
-        </Link>
       </div>
 
       <div className="card">

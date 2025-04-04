@@ -31,9 +31,6 @@ const CalendarEmbed = () => {
       {/* Header with no bottom margin */}
       <div className="flex justify-between items-center" style={{ marginBottom: '0' }}>
         <h2 className="text-2xl font-bold text-text-dark">Schedule a Call</h2>
-        <Link to="/dashboard" className="text-secondary hover:text-secondary-dark">
-          Back to Dashboard
-        </Link>
       </div>
 
       {/* Loading spinner - shown only when iframe is loading */}

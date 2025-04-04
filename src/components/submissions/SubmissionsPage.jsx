@@ -85,7 +85,7 @@ const SubmissionsPage = () => {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-text-dark">Your Submissions</h2>
+        <h2 className="text-2xl font-bold text-text-dark">Submissions</h2>
         <div className="flex items-center">
           <label htmlFor="filter" className="mr-2 text-text-dark">Filter:</label>
           <select

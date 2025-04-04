@@ -142,7 +142,7 @@ const Profile = () => {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-text-dark">Your Profile</h2>
+        <h2 className="text-2xl font-bold text-text-dark">Profile</h2>
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)}

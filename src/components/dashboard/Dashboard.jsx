@@ -121,7 +121,7 @@ const Dashboard = () => {
 
         <Link 
           to="/email-submission" 
-          className="card bg-accent text-text-dark hover:bg-accent-dark transition-colors flex flex-col items-center justify-center cursor-pointer"
+          className="card bg-secondary text-text-light hover:bg-secondary-dark transition-colors flex flex-col items-center justify-center cursor-pointer"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -132,7 +132,7 @@ const Dashboard = () => {
 
         <Link 
           to="/schedule-call" 
-          className="card bg-primary text-text-dark border border-gray-200 hover:bg-primary-dark transition-colors flex flex-col items-center justify-center cursor-pointer"
+          className="card bg-secondary text-text-light hover:bg-secondary-dark transition-colors flex flex-col items-center justify-center cursor-pointer"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
