@@ -28,7 +28,8 @@ const CalendarEmbed = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      {/* Header with no bottom margin */}
+      <div className="flex justify-between items-center" style={{ marginBottom: '0' }}>
         <h2 className="text-2xl font-bold text-text-dark">Schedule a Call</h2>
         <Link to="/dashboard" className="text-secondary hover:text-secondary-dark">
           Back to Dashboard
@@ -37,26 +38,37 @@ const CalendarEmbed = () => {
 
       {/* Loading spinner - shown only when iframe is loading */}
       {isLoading && (
-        <div className="flex justify-center items-center h-12 mb-4">
+        <div className="flex justify-center items-center h-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
         </div>
       )}
       
-      {/* Calendar iframe - directly embedded without any container divs */}
-      <iframe 
-        src={calendarUrl}
-        style={{ 
-          width: '100%', 
-          border: 'none', 
-          overflow: 'hidden', 
-          height: `${calendarHeight}px`,
-          display: isLoading ? 'none' : 'block' // Hide iframe until loaded
-        }}
-        scrolling="no"
-        id="etmgsLRR2wxNiCSlJiI1_1743733381977"
-        onLoad={handleIframeLoad}
-        title="Schedule a Call"
-      ></iframe>
+      {/* Calendar iframe - with specific styling to remove white space */}
+      <div style={{ 
+        lineHeight: 0, // Removes white space caused by line height
+        fontSize: 0,   // Removes white space caused by font size
+        marginTop: '-5px' // Slight negative margin to position calendar closer to text
+      }}>
+        <iframe 
+          src={calendarUrl}
+          style={{ 
+            width: '100%', 
+            border: 'none', 
+            display: 'block', // Removes white space below iframe
+            overflow: 'hidden', 
+            height: `${calendarHeight}px`,
+            backgroundColor: 'transparent',
+            padding: 0,
+            margin: 0
+          }}
+          scrolling="no"
+          frameBorder="0"
+          id="etmgsLRR2wxNiCSlJiI1_1743733381977"
+          onLoad={handleIframeLoad}
+          title="Schedule a Call"
+          allowTransparency="true"
+        ></iframe>
+      </div>
     </div>
   );
 };
