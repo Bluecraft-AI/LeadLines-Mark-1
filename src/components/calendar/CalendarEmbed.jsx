@@ -7,6 +7,7 @@ const CalendarEmbed = () => {
   // Define the Go High Level calendar embed URL
   const calendarUrl = 'https://form.bluecraft.ai/widget/booking/etmgsLRR2wxNiCSlJiI1';
   const calendarHeight = 700; // Define calendar height in one place for consistency
+  const bgColor = '#fbf9f9'; // Application background color
   
   // Handle iframe load event
   const handleIframeLoad = () => {
@@ -35,20 +36,29 @@ const CalendarEmbed = () => {
         </Link>
       </div>
 
-      <div className="card p-0 overflow-hidden relative">
+      <div className="relative" style={{ backgroundColor: bgColor }}>
+        {/* Loading area with background color matching the page */}
         {isLoading && (
           <div 
-            className="flex justify-center items-center absolute inset-0 bg-white" 
-            style={{ height: `${calendarHeight}px` }}
+            className="flex justify-center items-center absolute inset-0 z-10" 
+            style={{ height: `${calendarHeight}px`, backgroundColor: bgColor }}
           >
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
           </div>
         )}
         
-        <div className={`calendar-container ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+        {/* Calendar container with shadow and white background */}
+        <div 
+          className={`calendar-container card p-0 overflow-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+        >
           <iframe 
             src={calendarUrl}
-            style={{ width: '100%', border: 'none', overflow: 'hidden', height: `${calendarHeight}px` }}
+            style={{ 
+              width: '100%', 
+              border: 'none', 
+              overflow: 'hidden', 
+              height: `${calendarHeight}px`
+            }}
             scrolling="no"
             id="etmgsLRR2wxNiCSlJiI1_1743733381977"
             onLoad={handleIframeLoad}
