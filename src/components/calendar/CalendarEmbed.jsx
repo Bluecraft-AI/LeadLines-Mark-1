@@ -54,7 +54,7 @@ const CalendarEmbed = () => {
           style={{ backgroundColor: 'transparent' }}
         >
           {/* Added a small top padding to create space for the header text */}
-          <div style={{ paddingTop: '30px' }}>
+          <div style={{ paddingTop: '10px' }}>
             <iframe 
               src={calendarUrl}
               style={{ 
