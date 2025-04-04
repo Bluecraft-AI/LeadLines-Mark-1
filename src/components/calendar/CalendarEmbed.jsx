@@ -47,9 +47,10 @@ const CalendarEmbed = () => {
           </div>
         )}
         
-        {/* Calendar container with shadow and white background */}
+        {/* Calendar container - REMOVED card class and added background color matching the page */}
         <div 
-          className={`calendar-container card p-0 overflow-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          className={`overflow-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          style={{ backgroundColor: bgColor }}
         >
           <iframe 
             src={calendarUrl}
@@ -57,7 +58,8 @@ const CalendarEmbed = () => {
               width: '100%', 
               border: 'none', 
               overflow: 'hidden', 
-              height: `${calendarHeight}px`
+              height: `${calendarHeight}px`,
+              backgroundColor: 'transparent' // Ensure iframe background is transparent
             }}
             scrolling="no"
             id="etmgsLRR2wxNiCSlJiI1_1743733381977"
@@ -70,4 +72,4 @@ const CalendarEmbed = () => {
   );
 };
 
-export default CalendarEmbed; 
+export default CalendarEmbed;
