@@ -53,16 +53,6 @@ const CalendarEmbed = () => {
           ></iframe>
         </div>
       </div>
-      
-      <div className="mt-6 bg-blue-50 p-4 rounded-md border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">Calendar Successfully Integrated</h3>
-        <p className="text-blue-800">
-          Your Go High Level calendar has been successfully integrated. Users can now schedule calls using this interface.
-        </p>
-        <p className="text-blue-800 mt-2">
-          Calendar URL: <code className="bg-blue-100 px-2 py-1 rounded">{calendarUrl}</code>
-        </p>
-      </div>
     </div>
   );
 };
