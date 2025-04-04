@@ -284,14 +284,6 @@ const Profile = () => {
     <div className="max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-text-dark">Profile</h2>
-        {!isEditing && (
-          <button 
-            onClick={() => setIsEditing(true)}
-            className="btn-secondary"
-          >
-            Edit Profile
-          </button>
-        )}
       </div>
 
       <div className="card">
@@ -402,8 +394,8 @@ const Profile = () => {
             </div>
           )}
 
-          {isEditing && (
-            <div className="flex justify-end space-x-3">
+          {isEditing ? (
+            <div className="flex space-x-3 mt-4">
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
@@ -416,6 +408,15 @@ const Profile = () => {
                 className="btn-primary"
               >
                 Save Changes
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="btn-secondary"
+              >
+                Edit Profile
               </button>
             </div>
           )}
@@ -450,31 +451,33 @@ const Profile = () => {
                     value={userData.integrations.instantly.apiKey}
                     onChange={handleApiKeyChange}
                     placeholder="Enter your Instantly API key"
-                    className="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                    className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
                   />
-                  <button
-                    type="button"
-                    onClick={handleSaveApiKey}
-                    className="px-4 py-2 bg-secondary text-white rounded-r-md hover:bg-secondary-dark transition-colors"
-                  >
-                    Save
-                  </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   You can find your API key in your Instantly.ai account settings.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingApiKey(false)}
-                  className="mt-2 text-sm text-gray-500 hover:text-gray-700"
-                >
-                  Cancel
-                </button>
+                <div className="flex space-x-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingApiKey(false)}
+                    className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveApiKey}
+                    className="btn-primary"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex space-x-3">
+              <div className="mt-4">
                 {userData.integrations.instantly.isConnected ? (
-                  <>
+                  <div className="flex space-x-3">
                     <button
                       onClick={() => setIsEditingApiKey(true)}
                       className="btn-secondary"
@@ -487,7 +490,7 @@ const Profile = () => {
                     >
                       Disconnect
                     </button>
-                  </>
+                  </div>
                 ) : (
                   <button
                     onClick={() => setIsEditingApiKey(true)}
@@ -554,7 +557,7 @@ const Profile = () => {
                     required
                   />
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex space-x-3 mt-4">
                   <button
                     type="button"
                     onClick={() => setIsChangingPassword(false)}
@@ -571,12 +574,14 @@ const Profile = () => {
                 </div>
               </form>
             ) : (
-              <button 
-                className="btn-secondary"
-                onClick={() => setIsChangingPassword(true)}
-              >
-                Update Password
-              </button>
+              <div className="mt-4">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setIsChangingPassword(true)}
+                >
+                  Update Password
+                </button>
+              </div>
             )}
           </div>
         </div>

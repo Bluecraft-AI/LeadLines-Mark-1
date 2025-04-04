@@ -59,8 +59,8 @@ const MainLayout = ({ children }) => {
           {showNavLinks && (
             <nav>
               <ul className="flex space-x-4 items-center">
-                <li><Link to="/submissions" className="hover:text-accent transition-colors">Submissions</Link></li>
                 <li><Link to="/dashboard" className="hover:text-accent transition-colors">Dashboard</Link></li>
+                <li><Link to="/submissions" className="hover:text-accent transition-colors">Submissions</Link></li>
                 <li className="relative" ref={dropdownRef}>
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
