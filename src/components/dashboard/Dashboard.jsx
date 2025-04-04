@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import AirtableService from '../../services/AirtableService';
+import { supabase } from '../../config/supabase';
+import WorkflowService from '../../services/WorkflowService';
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -25,50 +26,43 @@ const Dashboard = () => {
   ]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch submissions data and update workflow cards
+  // Fetch user-specific workflow submission counts
   useEffect(() => {
-    const fetchSubmissionsData = async () => {
+    const fetchUserSubmissionCounts = async () => {
       if (!currentUser) return;
       
       try {
         setLoading(true);
-        const allSubmissions = await AirtableService.getSubmissions('Filter_Submissions', currentUser.uid);
         
-        // Update workflows with submission counts and processing status
-        const updatedWorkflows = workflows.map(workflow => {
-          // Filter submissions for this workflow
-          const workflowSubmissions = allSubmissions.filter(
-            submission => submission.workflow_id === workflow.id || 
-                         (submission.workflow_type && submission.workflow_type.includes(workflow.title))
-          );
-          
-          // Check if any submissions are in "Processing" status
-          const hasProcessingSubmissions = workflowSubmissions.some(
-            submission => submission.status === 'Processing'
-          );
-          
-          return {
-            ...workflow,
-            submissions: workflowSubmissions.length,
-            hasProcessing: hasProcessingSubmissions
-          };
-        });
+        // Fetch user's workflow submission counts
+        const userWorkflowCounts = await WorkflowService.getUserWorkflowCounts(currentUser.uid);
         
-        setWorkflows(updatedWorkflows);
+        // Update workflows with user-specific submission counts
+        if (userWorkflowCounts && userWorkflowCounts.length > 0) {
+          const updatedWorkflows = workflows.map(workflow => {
+            const userWorkflowData = userWorkflowCounts.find(item => item.workflow_id === workflow.id);
+            
+            if (userWorkflowData) {
+              return {
+                ...workflow,
+                submissions: userWorkflowData.submission_count || 0,
+                hasProcessing: userWorkflowData.has_processing || false
+              };
+            }
+            
+            return workflow;
+          });
+          
+          setWorkflows(updatedWorkflows);
+        }
       } catch (error) {
-        console.error('Error fetching submissions data:', error);
+        console.error('Error in fetchUserSubmissionCounts:', error);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchSubmissionsData();
-    
-    // Set up interval to refresh data every 30 seconds
-    const intervalId = setInterval(fetchSubmissionsData, 30000);
-    
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId);
+    fetchUserSubmissionCounts();
   }, [currentUser]);
 
   const handleLogout = async () => {

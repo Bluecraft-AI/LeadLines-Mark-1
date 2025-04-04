@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
+import WorkflowService from '../../../services/WorkflowService';
 
 const EmailSubmissionForm = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     domains: '',
     forwardingDomain: '',
@@ -73,6 +76,12 @@ const EmailSubmissionForm = () => {
         
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Increment submission count for email account submission workflow (use ID 1 for job posting campaign)
+        if (currentUser) {
+          await WorkflowService.incrementSubmissionCount(currentUser.uid, 1);
+          console.log('Incremented submission count for workflow: 1');
+        }
         
         setSubmitSuccess(true);
         

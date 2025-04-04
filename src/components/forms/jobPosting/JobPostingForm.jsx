@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { useAuth } from '../../../contexts/AuthContext';
+import WorkflowService from '../../../services/WorkflowService';
 
 const JobPostingCampaignForm = () => {
   const [submitted, setSubmitted] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   
   // Check if this is the Job Posting Campaign workflow (id=1)
   useEffect(() => {
@@ -78,6 +81,12 @@ const JobPostingCampaignForm = () => {
       
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Increment submission count for this workflow
+      if (currentUser) {
+        await WorkflowService.incrementSubmissionCount(currentUser.uid, parseInt(id));
+        console.log('Incremented submission count for workflow:', id);
+      }
       
       // Show success message
       setSubmitted(true);
