@@ -6,6 +6,7 @@ const CalendarEmbed = () => {
   
   // Define the Go High Level calendar embed URL
   const calendarUrl = 'https://form.bluecraft.ai/widget/booking/etmgsLRR2wxNiCSlJiI1';
+  const calendarHeight = 700; // Define calendar height in one place for consistency
   
   // Handle iframe load event
   const handleIframeLoad = () => {
@@ -34,22 +35,24 @@ const CalendarEmbed = () => {
         </Link>
       </div>
 
-      <div className="card p-0 overflow-hidden">
+      <div className="card p-0 overflow-hidden relative">
         {isLoading && (
-          <div className="flex justify-center items-center h-96">
+          <div 
+            className="flex justify-center items-center absolute inset-0 bg-white" 
+            style={{ height: `${calendarHeight}px` }}
+          >
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
           </div>
         )}
         
-        <div className={`calendar-container ${isLoading ? 'hidden' : 'block'}`}>
+        <div className={`calendar-container ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
           <iframe 
             src={calendarUrl}
-            style={{ width: '100%', border: 'none', overflow: 'hidden' }}
+            style={{ width: '100%', border: 'none', overflow: 'hidden', height: `${calendarHeight}px` }}
             scrolling="no"
             id="etmgsLRR2wxNiCSlJiI1_1743733381977"
             onLoad={handleIframeLoad}
             title="Schedule a Call"
-            height="700"
           ></iframe>
         </div>
       </div>
