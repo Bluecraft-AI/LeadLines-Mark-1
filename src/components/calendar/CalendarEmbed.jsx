@@ -29,21 +29,20 @@ const CalendarEmbed = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Added padding-bottom to ensure text doesn't get covered */}
-      <div className="flex justify-between items-center pb-8">
+      <div className="flex justify-between items-center mb-2">
         <h2 className="text-2xl font-bold text-text-dark">Schedule a Call</h2>
         <Link to="/dashboard" className="text-secondary hover:text-secondary-dark">
           Back to Dashboard
         </Link>
       </div>
 
-      {/* Added negative margin but increased the value to maintain calendar position */}
-      <div className="relative mt-[-20px]" style={{ backgroundColor: bgColor }}>
-        {/* Loading area with background color matching the page */}
+      {/* Added negative margin to reduce space between heading and calendar */}
+      <div className="relative mt-[-20px]" style={{ backgroundColor: 'transparent' }}>
+        {/* Loading area with transparent background */}
         {isLoading && (
           <div 
             className="flex justify-center items-center absolute inset-0 z-10" 
-            style={{ height: `${calendarHeight}px`, backgroundColor: bgColor }}
+            style={{ height: `${calendarHeight}px`, backgroundColor: 'transparent' }}
           >
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
           </div>
@@ -52,22 +51,25 @@ const CalendarEmbed = () => {
         {/* Calendar container - with transparent background */}
         <div 
           className={`overflow-hidden ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-          style={{ backgroundColor: bgColor }}
+          style={{ backgroundColor: 'transparent' }}
         >
-          <iframe 
-            src={calendarUrl}
-            style={{ 
-              width: '100%', 
-              border: 'none', 
-              overflow: 'hidden', 
-              height: `${calendarHeight}px`,
-              backgroundColor: 'transparent' // Ensure iframe background is transparent
-            }}
-            scrolling="no"
-            id="etmgsLRR2wxNiCSlJiI1_1743733381977"
-            onLoad={handleIframeLoad}
-            title="Schedule a Call"
-          ></iframe>
+          {/* Added a small top padding to create space for the header text */}
+          <div style={{ paddingTop: '30px' }}>
+            <iframe 
+              src={calendarUrl}
+              style={{ 
+                width: '100%', 
+                border: 'none', 
+                overflow: 'hidden', 
+                height: `${calendarHeight}px`,
+                backgroundColor: 'transparent' // Ensure iframe background is transparent
+              }}
+              scrolling="no"
+              id="etmgsLRR2wxNiCSlJiI1_1743733381977"
+              onLoad={handleIframeLoad}
+              title="Schedule a Call"
+            ></iframe>
+          </div>
         </div>
       </div>
     </div>
