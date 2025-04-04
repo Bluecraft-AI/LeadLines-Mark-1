@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../config/supabase';
-import WorkflowService from '../../services/WorkflowService';
+
+// Fallback implementation if imports fail
+let WorkflowService;
+try {
+  WorkflowService = require('../../services/WorkflowService').default;
+} catch (error) {
+  console.error('Error importing WorkflowService:', error);
+  // Mock service to prevent fatal errors
+  WorkflowService = {
+    getUserWorkflowCounts: async () => [],
+    incrementSubmissionCount: async () => true,
+    updateProcessingStatus: async () => true
+  };
+}
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
@@ -17,7 +29,7 @@ const Dashboard = () => {
     },
     {
       id: 2,
-      title: 'Comming soon...',
+      title: 'Coming soon...',
       description: 'Currently in development',
       submissions: 0,
       hasProcessing: false,
@@ -25,16 +37,21 @@ const Dashboard = () => {
     }
   ]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch user-specific workflow submission counts
   useEffect(() => {
     const fetchUserSubmissionCounts = async () => {
-      if (!currentUser) return;
+      if (!currentUser) {
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
+        setError(null);
         
-        // Fetch user's workflow submission counts
+        // Fetch user's workflow submission counts with error handling
         const userWorkflowCounts = await WorkflowService.getUserWorkflowCounts(currentUser.uid);
         
         // Update workflows with user-specific submission counts
@@ -57,6 +74,7 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error('Error in fetchUserSubmissionCounts:', error);
+        setError('Failed to load workflow data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -126,6 +144,11 @@ const Dashboard = () => {
 
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-text-dark mb-4">Available Workflows</h3>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center items-center h-40">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-secondary"></div>
