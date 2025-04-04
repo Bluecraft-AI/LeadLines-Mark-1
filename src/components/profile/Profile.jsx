@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../config/supabase';
 
 const Profile = () => {
-  const { currentUser, getUserSettings, updateUserSettings } = useAuth();
+  const { currentUser, getUserSettings, updateUserSettings, updatePassword } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
   
   // Get user settings from context
   const userSettings = getUserSettings() || {
@@ -35,6 +44,41 @@ const Profile = () => {
       }
     }
   });
+
+  // Fetch user profile from Supabase on component mount
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', currentUser.uid)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+        
+        if (data) {
+          setUserData(prevData => ({
+            ...prevData,
+            name: data.name || prevData.name,
+            company: data.company || prevData.company,
+            role: data.role || prevData.role,
+            phone: data.phone || prevData.phone,
+            notifications: data.notifications || prevData.notifications
+          }));
+        }
+      } catch (error) {
+        console.error('Error in fetchUserProfile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [currentUser]);
 
   // Update local state when user settings change
   useEffect(() => {
@@ -84,14 +128,44 @@ const Profile = () => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // In a real app, this would save to a database
-    console.log('Saving profile data:', userData);
-    setIsEditing(false);
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData({
+      ...passwordData,
+      [name]: value
+    });
   };
 
-  const handleSaveApiKey = () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      // Save to Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: currentUser.uid,
+          name: userData.name,
+          company: userData.company,
+          role: userData.role,
+          phone: userData.phone,
+          notifications: userData.notifications,
+          updated_at: new Date()
+        });
+      
+      if (error) {
+        console.error('Error saving profile data:', error);
+        return;
+      }
+      
+      console.log('Profile data saved successfully');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+    }
+  };
+
+  const handleSaveApiKey = async () => {
     // Save API key to user settings
     const updatedSettings = {
       ...userSettings,
@@ -106,11 +180,29 @@ const Profile = () => {
     
     updateUserSettings(updatedSettings);
     
+    // Also save to Supabase
+    try {
+      const { error } = await supabase
+        .from('api_keys')
+        .upsert({
+          user_id: currentUser.uid,
+          service: 'instantly',
+          api_key: userData.integrations.instantly.apiKey,
+          updated_at: new Date()
+        });
+      
+      if (error) {
+        console.error('Error saving API key:', error);
+      }
+    } catch (error) {
+      console.error('Error in handleSaveApiKey:', error);
+    }
+    
     console.log('Saving Instantly API key for user:', currentUser?.email);
     setIsEditingApiKey(false);
   };
 
-  const handleDisconnectInstantly = () => {
+  const handleDisconnectInstantly = async () => {
     // Remove API key from user settings
     const updatedSettings = {
       ...userSettings,
@@ -125,6 +217,21 @@ const Profile = () => {
     
     updateUserSettings(updatedSettings);
     
+    // Also remove from Supabase
+    try {
+      const { error } = await supabase
+        .from('api_keys')
+        .delete()
+        .eq('user_id', currentUser.uid)
+        .eq('service', 'instantly');
+      
+      if (error) {
+        console.error('Error deleting API key:', error);
+      }
+    } catch (error) {
+      console.error('Error in handleDisconnectInstantly:', error);
+    }
+    
     setUserData({
       ...userData,
       integrations: {
@@ -137,6 +244,40 @@ const Profile = () => {
     });
     
     console.log('Disconnected Instantly integration for user:', currentUser?.email);
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    // Validate passwords
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+    
+    try {
+      await updatePassword(passwordData.currentPassword, passwordData.newPassword);
+      setPasswordSuccess('Password updated successfully');
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setTimeout(() => {
+        setIsChangingPassword(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (error) {
+      console.error('Error updating password:', error);
+      setPasswordError(error.message || 'Failed to update password');
+    }
   };
 
   return (
@@ -367,13 +508,76 @@ const Profile = () => {
           <div className="mb-4">
             <h4 className="text-lg font-medium text-text-dark mb-2">Change Password</h4>
             <p className="text-gray-600 mb-3">Ensure your account is using a strong password for security.</p>
-            <button className="btn-secondary">Update Password</button>
-          </div>
-          
-          <div className="pt-4 border-t border-gray-200">
-            <h4 className="text-lg font-medium text-text-dark mb-2">Two-Factor Authentication</h4>
-            <p className="text-gray-600 mb-3">Add additional security to your account by enabling two-factor authentication.</p>
-            <button className="btn-secondary">Enable 2FA</button>
+            
+            {isChangingPassword ? (
+              <form onSubmit={handleUpdatePassword}>
+                {passwordError && (
+                  <div className="mb-3 p-2 bg-red-100 text-red-700 rounded">
+                    {passwordError}
+                  </div>
+                )}
+                {passwordSuccess && (
+                  <div className="mb-3 p-2 bg-green-100 text-green-700 rounded">
+                    {passwordSuccess}
+                  </div>
+                )}
+                <div className="mb-3">
+                  <label className="block text-text-dark mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="block text-text-dark mb-1">New Password</label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-text-dark mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                    required
+                  />
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsChangingPassword(false)}
+                    className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button 
+                className="btn-secondary"
+                onClick={() => setIsChangingPassword(true)}
+              >
+                Update Password
+              </button>
+            )}
           </div>
         </div>
       </div>

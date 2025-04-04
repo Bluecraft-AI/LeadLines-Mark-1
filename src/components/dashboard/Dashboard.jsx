@@ -17,7 +17,7 @@ try {
 }
 
 const Dashboard = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
   const [workflows, setWorkflows] = useState([
     {
       id: 1,
@@ -83,28 +83,14 @@ const Dashboard = () => {
     fetchUserSubmissionCounts();
   }, [currentUser]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Failed to log out', error);
-    }
-  };
-
   const handleInstantlyRedirect = () => {
     window.open('https://app.instantly.ai/app/dashboard', '_blank');
   };
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8">
         <h2 className="text-2xl font-bold text-text-dark">Dashboard</h2>
-        <button 
-          onClick={handleLogout}
-          className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
-        >
-          Log Out
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

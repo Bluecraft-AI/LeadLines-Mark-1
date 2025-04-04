@@ -11,68 +11,105 @@ class UserService {
         .eq('user_id', userId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      throw error;
+      console.error('Error in getUserProfile:', error);
+      return null;
     }
   }
 
-  // Update user profile data
-  async updateUserProfile(userId, profileData) {
+  // Create or update user profile data
+  async upsertUserProfile(userId, profileData) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .update(profileData)
-        .eq('user_id', userId);
+        .upsert({
+          user_id: userId,
+          ...profileData,
+          updated_at: new Date()
+        });
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error upserting user profile:', error);
+        return false;
+      }
+      return true;
     } catch (error) {
-      console.error('Error updating user profile:', error);
-      throw error;
+      console.error('Error in upsertUserProfile:', error);
+      return false;
     }
   }
 
-  // Store Instantly.ai API key
-  async saveInstantlyApiKey(userId, apiKey) {
+  // Store API key for a service
+  async saveApiKey(userId, service, apiKey) {
     try {
       // In a production environment, API keys should be encrypted
       const { data, error } = await supabase
         .from('api_keys')
         .upsert({ 
           user_id: userId, 
-          service: 'instantly', 
+          service: service, 
           api_key: apiKey,
           updated_at: new Date()
         });
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error(`Error saving ${service} API key:`, error);
+        return false;
+      }
+      return true;
     } catch (error) {
-      console.error('Error saving Instantly API key:', error);
-      throw error;
+      console.error(`Error in saveApiKey for ${service}:`, error);
+      return false;
     }
   }
 
-  // Get Instantly.ai API key
-  async getInstantlyApiKey(userId) {
+  // Get API key for a service
+  async getApiKey(userId, service) {
     try {
       const { data, error } = await supabase
         .from('api_keys')
         .select('api_key')
         .eq('user_id', userId)
-        .eq('service', 'instantly')
+        .eq('service', service)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
+      if (error) {
+        if (error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+          console.error(`Error fetching ${service} API key:`, error);
+        }
+        return null;
+      }
       return data?.api_key || null;
     } catch (error) {
-      console.error('Error fetching Instantly API key:', error);
-      throw error;
+      console.error(`Error in getApiKey for ${service}:`, error);
+      return null;
+    }
+  }
+
+  // Delete API key for a service
+  async deleteApiKey(userId, service) {
+    try {
+      const { error } = await supabase
+        .from('api_keys')
+        .delete()
+        .eq('user_id', userId)
+        .eq('service', service);
+      
+      if (error) {
+        console.error(`Error deleting ${service} API key:`, error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error(`Error in deleteApiKey for ${service}:`, error);
+      return false;
     }
   }
 }
 
-export default new UserService(); 
+export default new UserService();

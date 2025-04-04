@@ -3,9 +3,13 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  updatePassword as firebaseUpdatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { supabase } from '../config/supabase';
 
 // Create the authentication context
 const AuthContext = createContext();
@@ -46,6 +50,28 @@ export const AuthProvider = ({ children }) => {
       setUserSettings({
         [user.uid]: initialSettings
       });
+      
+      // Create user profile in Supabase
+      try {
+        await supabase.from('profiles').insert({
+          user_id: user.uid,
+          name: 'John Doe',
+          email: user.email,
+          company: 'Acme Corporation',
+          role: 'Hiring Manager',
+          phone: '(555) 123-4567',
+          notifications: {
+            email: true,
+            browser: false,
+            mobile: true
+          },
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      } catch (error) {
+        console.error("Error creating user profile in Supabase:", error);
+        // Continue even if Supabase profile creation fails
+      }
       
       return user;
     } catch (error) {
@@ -98,6 +124,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update password function
+  const updatePassword = async (currentPassword, newPassword) => {
+    if (!currentUser) {
+      throw new Error('No user is currently logged in');
+    }
+
+    try {
+      // Re-authenticate user before changing password
+      const credential = EmailAuthProvider.credential(
+        currentUser.email,
+        currentPassword
+      );
+      
+      await reauthenticateWithCredential(currentUser, credential);
+      
+      // Update password
+      await firebaseUpdatePassword(currentUser, newPassword);
+      
+      return true;
+    } catch (error) {
+      console.error("Error updating password:", error);
+      throw error;
+    }
+  };
+
   // Update user settings
   const updateUserSettings = (settings) => {
     if (!currentUser) return;
@@ -142,6 +193,7 @@ export const AuthProvider = ({ children }) => {
     signup,
     login,
     logout,
+    updatePassword,
     loading,
     updateUserSettings,
     getUserSettings
