@@ -16,19 +16,11 @@ const Dashboard = () => {
     },
     {
       id: 2,
-      title: 'LinkedIn Sales Navigator',
-      description: 'Target decision makers based on LinkedIn profile criteria',
+      title: 'Comming soon...',
+      description: 'Currently in development',
       submissions: 0,
       hasProcessing: false,
       createdAt: '2025-03-30'
-    },
-    {
-      id: 3,
-      title: 'Conference Attendees',
-      description: 'Reach out to attendees of industry conferences and events',
-      submissions: 0,
-      hasProcessing: false,
-      createdAt: '2025-03-25'
     }
   ]);
   const [loading, setLoading] = useState(true);
