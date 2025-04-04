@@ -1,20 +1,23 @@
 // Firebase configuration for authentication
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getAnalytics } from 'firebase/analytics';
 
 // Your web app's Firebase configuration
 // Replace with your actual Firebase config when implementing
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDHjkB9XX8tHc1GSeYofMgg9ckqeMtgZmg",
+  authDomain: "leadlines-portal.firebaseapp.com",
+  projectId: "leadlines-portal",
+  storageBucket: "leadlines-portal.firebasestorage.app",
+  messagingSenderId: "966858129098",
+  appId: "1:966858129098:web:96ee31a034cccb1a8bbe33",
+  measurementId: "G-05EYVQS5E8"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const analytics = getAnalytics(app);
 
-export { auth }; 
+export { auth, analytics }; 

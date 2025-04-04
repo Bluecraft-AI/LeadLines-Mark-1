@@ -1,4 +1,11 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
 
 // Create the authentication context
 const AuthContext = createContext();
@@ -16,64 +23,79 @@ export const AuthProvider = ({ children }) => {
 
   // Sign up function
   const signup = async (email, password) => {
-    // This would be replaced with actual Firebase authentication
-    console.log('Signup with:', email, password);
-    // Simulate successful signup
-    const newUser = { email, uid: `user-${Date.now()}` };
-    setCurrentUser(newUser);
-    
-    // Initialize user settings
-    setUserSettings({
-      [newUser.uid]: {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Initialize user settings
+      const initialSettings = {
         integrations: {
           instantly: {
             apiKey: '',
             isConnected: false
           }
         }
-      }
-    });
-    
-    return newUser;
+      };
+      
+      // Store settings in localStorage
+      localStorage.setItem(`user_settings_${user.uid}`, JSON.stringify({
+        [user.uid]: initialSettings
+      }));
+      
+      // Update state
+      setUserSettings({
+        [user.uid]: initialSettings
+      });
+      
+      return user;
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
   };
 
   // Login function
   const login = async (email, password) => {
-    // This would be replaced with actual Firebase authentication
-    console.log('Login with:', email, password);
-    // Simulate successful login
-    const user = { email, uid: `user-${email.replace(/[^a-zA-Z0-9]/g, '')}` };
-    setCurrentUser(user);
-    
-    // Load user settings from localStorage
-    const savedSettings = localStorage.getItem(`user_settings_${user.uid}`);
-    if (savedSettings) {
-      setUserSettings(JSON.parse(savedSettings));
-    } else {
-      // Initialize settings if not found
-      const initialSettings = {
-        [user.uid]: {
-          integrations: {
-            instantly: {
-              apiKey: '',
-              isConnected: false
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Load user settings from localStorage
+      const savedSettings = localStorage.getItem(`user_settings_${user.uid}`);
+      if (savedSettings) {
+        setUserSettings(JSON.parse(savedSettings));
+      } else {
+        // Initialize settings if not found
+        const initialSettings = {
+          [user.uid]: {
+            integrations: {
+              instantly: {
+                apiKey: '',
+                isConnected: false
+              }
             }
           }
-        }
-      };
-      setUserSettings(initialSettings);
-      localStorage.setItem(`user_settings_${user.uid}`, JSON.stringify(initialSettings));
+        };
+        setUserSettings(initialSettings);
+        localStorage.setItem(`user_settings_${user.uid}`, JSON.stringify(initialSettings));
+      }
+      
+      return user;
+    } catch (error) {
+      console.error("Error signing in:", error);
+      throw error;
     }
-    
-    return user;
   };
 
   // Logout function
   const logout = async () => {
-    // This would be replaced with actual Firebase authentication
-    console.log('Logging out');
-    setCurrentUser(null);
-    setUserSettings({});
+    try {
+      await signOut(auth);
+      setUserSettings({});
+    } catch (error) {
+      console.error("Error signing out:", error);
+      throw error;
+    }
   };
 
   // Update user settings
@@ -97,15 +119,21 @@ export const AuthProvider = ({ children }) => {
 
   // Effect for initializing auth state
   useEffect(() => {
-    // This would be replaced with actual Firebase auth state listener
-    // For now, just simulate checking auth state
-    const checkAuthState = () => {
-      // Simulate no user being logged in initially
-      setCurrentUser(null);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
       setLoading(false);
-    };
+      
+      if (user) {
+        // Load user settings from localStorage if user is logged in
+        const savedSettings = localStorage.getItem(`user_settings_${user.uid}`);
+        if (savedSettings) {
+          setUserSettings(JSON.parse(savedSettings));
+        }
+      }
+    });
 
-    checkAuthState();
+    // Cleanup subscription on unmount
+    return unsubscribe;
   }, []);
 
   // Context value
