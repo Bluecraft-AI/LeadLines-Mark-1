@@ -21,7 +21,7 @@ LeadLines stands out from conventional cold email tools through several key diff
 *   **Unique AI Customization:** Unlike generic AI tools, LeadLines provides each user with a personalized AI assistant. Trained on your business-specific data, this ensures that every email sequence is not only tailored to the lead but also perfectly aligned with your unique value proposition and audience insights.
 *   **Technical Simplicity:** LeadLines automates the complex technical aspects of cold email campaigns. This removes the burden from users, who no longer need to be experts in managing deliverability or domain health.
 *   **Intelligent Lead Sourcing:** Save valuable time on manual research. LeadLines can automatically find and qualify leads that match your ideal client profile.
-*   **Embedded AI Expertise:** Our AI models are trained on over 200 pages of proven cold email strategies and best practices, ensuring the generation of high-quality, effective outreach messages.
+*   **Embedded AI Expertise:** Our AI assistants and fine-tuned models are trained on over 200 pages of proven cold email strategies and best practices, ensuring the generation of high-quality, effective outreach messages.
 
 ## Technology Stack
 
