@@ -1,6 +1,13 @@
 #!/bin/bash
 cd ~/Cursor/LeadLines-Mark-1-main
 
+# Prompt for GitHub token
+read -sp "Enter GitHub token: " GITHUB_TOKEN
+echo
+
+# Set the remote URL with the token
+git remote set-url origin https://${GITHUB_TOKEN}@github.com/Bluecraft-AI/LeadLines-Mark-1.git
+
 echo "Checking for remote changes..."
 git fetch origin
 
