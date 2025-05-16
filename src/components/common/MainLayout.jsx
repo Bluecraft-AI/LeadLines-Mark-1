@@ -63,20 +63,18 @@ const MainLayout = ({ children }) => {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Top Panel - fixed */}
-      <header className="bg-secondary text-text-light p-4 shadow-md">
+      <header className="bg-secondary text-text-light p-4 pb-3 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           {showNav && (
             <>
-              {/* LeadLines button positioned directly above sidebar menu options */}
-              <div className="w-44 flex items-center">
-                <div className="w-full">
-                  <Link 
-                    to="/dashboard" 
-                    className="text-2xl font-bold hover:text-accent transition-colors block px-4 text-left"
-                  >
-                    LeadLines
-                  </Link>
-                </div>
+              {/* LeadLines button positioned for perfect alignment with sidebar menu options */}
+              <div className="w-44 flex">
+                <Link 
+                  to="/dashboard" 
+                  className="text-2xl font-bold hover:text-accent transition-colors py-2 px-4 block"
+                >
+                  LeadLines
+                </Link>
               </div>
               
               {/* AI Agent button on the right */}
@@ -101,7 +99,7 @@ const MainLayout = ({ children }) => {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - fixed, width adjusted to fit CSV Upload text */}
         {showNav && (
-          <aside className="w-44 bg-secondary text-text-light p-3 flex flex-col overflow-hidden">
+          <aside className="w-44 bg-secondary text-text-light p-3 pt-2 flex flex-col overflow-hidden">
             {/* Top Navigation Links */}
             <nav className="mb-auto overflow-y-auto">
               <ul className="space-y-3">
