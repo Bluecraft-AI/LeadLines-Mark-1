@@ -1,0 +1,321 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+
+const CSVUploadForm = () => {
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [emailCount, setEmailCount] = useState('');
+  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ text: '', type: '' });
+  const fileInputRef = useRef(null);
+  const fileDropAreaRef = useRef(null);
+  const { currentUser } = useAuth();
+  
+  // Webhook URL - in a production app, this would be stored in environment variables
+  const WEBHOOK_URL = "https://bluecraftleads.app.n8n.cloud/webhook-test/363e4379-80f1-49b0-8d2f-e5ad1bc61f85";
+
+  // Handle drag and drop events
+  useEffect(() => {
+    const fileDropArea = fileDropAreaRef.current;
+    if (!fileDropArea) return;
+
+    const preventDefaults = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const highlight = () => {
+      fileDropArea.classList.add('dragover');
+    };
+
+    const unhighlight = () => {
+      fileDropArea.classList.remove('dragover');
+    };
+
+    const handleDrop = (e) => {
+      unhighlight();
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    };
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      fileDropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      fileDropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      fileDropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    fileDropArea.addEventListener('drop', handleDrop, false);
+
+    return () => {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileDropArea.removeEventListener(eventName, preventDefaults, false);
+      });
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        fileDropArea.removeEventListener(eventName, highlight, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        fileDropArea.removeEventListener(eventName, unhighlight, false);
+      });
+
+      fileDropArea.removeEventListener('drop', handleDrop, false);
+    };
+  }, []);
+
+  // Handle file selection
+  const handleFileChange = (e) => {
+    const files = e.target.files;
+    if (files.length > 0) {
+      handleFiles(files);
+    }
+  };
+
+  // Process selected files
+  const handleFiles = (files) => {
+    if (files.length === 0) return;
+    
+    // Filter for allowed file types and sizes
+    const newFiles = Array.from(files).filter(file => {
+      // Max file size: 10MB
+      if (file.size > 10 * 1024 * 1024) {
+        showStatusMessage(`File ${file.name} is too large. Maximum size is 10MB.`, 'error');
+        return false;
+      }
+      
+      // Check for CSV file type
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        showStatusMessage(`File ${file.name} is not a CSV file.`, 'error');
+        return false;
+      }
+      
+      return true;
+    });
+    
+    if (newFiles.length === 0) return;
+    
+    // Add new files to the array
+    setSelectedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  // Remove a file from the selection
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Show status message
+  const showStatusMessage = (text, type) => {
+    setStatusMessage({ text, type });
+    
+    // Clear message after 5 seconds
+    setTimeout(() => {
+      setStatusMessage({ text: '', type: '' });
+    }, 5000);
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Add email count field if it has a value
+      if (emailCount.trim()) {
+        formData.append('number of emails', emailCount);
+      }
+      
+      // Add notes field if it has content
+      if (notes.trim()) {
+        formData.append('additional notes', notes);
+      }
+      
+      // Add files
+      for (let i = 0; i < selectedFiles.length; i++) {
+        formData.append('files', selectedFiles[i]);
+      }
+      
+      // Send data to webhook
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        // Success
+        showStatusMessage('Files uploaded successfully!', 'success');
+        resetForm();
+      } else {
+        // Error
+        showStatusMessage('Error uploading files. Please try again.', 'error');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      showStatusMessage('Error uploading files. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    if (selectedFiles.length === 0) {
+      showStatusMessage('Please select at least one CSV file.', 'error');
+      return false;
+    }
+    
+    if (!emailCount.trim()) {
+      showStatusMessage('Please enter the number of emails.', 'error');
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setSelectedFiles([]);
+    setEmailCount('');
+    setNotes('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold text-text-dark mb-6">CSV Upload</h2>
+      <p className="text-gray-600 mb-6">
+        Upload your CSV file to generate personalized email sequences.
+      </p>
+      
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-secondary text-white p-5 text-center">
+          <h3 className="text-xl font-bold">LeadLines File Upload</h3>
+          <p className="opacity-90">Upload Your CSV</p>
+        </div>
+        
+        <div className="p-6">
+          {statusMessage.text && (
+            <div 
+              className={`p-4 mb-6 rounded-md ${
+                statusMessage.type === 'success' 
+                  ? 'bg-green-100 border border-green-300 text-green-700' 
+                  : 'bg-red-100 border border-red-300 text-red-700'
+              }`}
+            >
+              {statusMessage.text}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="fileUpload" className="block font-semibold mb-2 after:content-['*'] after:ml-0.5 after:text-red-500">
+                Files
+              </label>
+              <div 
+                ref={fileDropAreaRef}
+                className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer hover:border-secondary hover:bg-blue-50 transition-colors"
+              >
+                <div className="text-4xl mb-2">📂</div>
+                <p>Drag & drop files here or click to browse</p>
+                <p className="text-xs text-gray-500 mt-1">Maximum file size: 10MB</p>
+                <input 
+                  type="file" 
+                  id="fileUpload" 
+                  ref={fileInputRef}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  multiple 
+                  accept=".csv"
+                  onChange={handleFileChange}
+                />
+              </div>
+              
+              {selectedFiles.length > 0 && (
+                <div className="mt-4 p-3 bg-gray-100 rounded-md">
+                  <p className="font-semibold">Selected files:</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center bg-white border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <span className="max-w-[180px] truncate">{file.name}</span>
+                        <button 
+                          type="button"
+                          className="ml-2 text-red-500 font-bold"
+                          onClick={() => removeFile(index)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <label htmlFor="emailCount" className="block font-semibold mb-2 after:content-['*'] after:ml-0.5 after:text-red-500">
+                Number of Emails
+              </label>
+              <input 
+                type="number" 
+                id="emailCount" 
+                value={emailCount}
+                onChange={(e) => setEmailCount(e.target.value)}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                placeholder="Enter the number of emails in your CSV"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Specify how many email's you'd like to have in your sequence.</p>
+            </div>
+            
+            <div>
+              <label htmlFor="notes" className="block font-semibold mb-2">
+                Additional Notes
+              </label>
+              <textarea 
+                id="notes" 
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows="3"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                placeholder="Enter any additional information about your CSV file here..."
+              />
+              <p className="text-xs text-gray-500 mt-1">Optional: Add any context or special instructions related to your upload.</p>
+            </div>
+            
+            <button 
+              type="submit" 
+              className="w-full bg-secondary text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 align-middle"></span>
+                  <span>Submitting...</span>
+                </>
+              ) : 'Submit'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CSVUploadForm; 

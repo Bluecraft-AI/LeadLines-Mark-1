@@ -29,15 +29,19 @@ LeadLines-Mark-1/
 │   │   ├── dashboard/          # Dashboard functionality
 │   │   │   └── Dashboard.jsx   # Main dashboard component
 │   │   ├── forms/              # Form components
+│   │   │   ├── csvUpload/      # CSV upload forms
+│   │   │   │   └── CSVUploadForm.jsx # CSV file upload component
 │   │   │   ├── emailAccount/   # Email account forms
 │   │   │   │   └── EmailSubmissionForm.jsx # Email account submission
 │   │   │   └── jobPosting/     # Job posting forms
-│   │   │       └── JobPostingForm.jsx # Job posting submission (used for CSV Upload)
+│   │   │       └── JobPostingForm.jsx # Job posting submission
 │   │   ├── profile/            # User profile components
 │   │   │   └── Profile.jsx     # User profile management
-│   │   └── submissions/        # Submission management
-│   │       ├── MappingModal.jsx # Field mapping modal
-│   │       └── SubmissionsPage.jsx # Submissions listing page
+│   │   ├── submissions/        # Submission management
+│   │   │   ├── MappingModal.jsx # Field mapping modal
+│   │   │   └── SubmissionsPage.jsx # Submissions listing page
+│   │   └── upload/             # CSV Upload section
+│   │       └── UploadPage.jsx  # CSV Upload page component
 │   ├── config/                 # Configuration files
 │   │   ├── airtable.js         # Airtable API configuration
 │   │   ├── firebase.js         # Firebase configuration
@@ -49,7 +53,7 @@ LeadLines-Mark-1/
 │   │   ├── AirtableService.js  # Airtable API service
 │   │   ├── InstantlyService.js # Instantly.ai integration
 │   │   ├── UserService.js      # User management service
-│   │   └── WorkflowService.js  # Workflow management service
+│   │   └── WorkflowService.js  # Workflow submission tracking
 │   ├── styles/                 # CSS and styling files
 │   ├── App.jsx                 # Main application component with routes
 │   └── main.jsx                # Application entry point
@@ -70,20 +74,34 @@ The application uses a consistent layout structure across all pages:
 - `src/components/common/MainLayout.jsx` - Main application layout with:
   - Top panel: Contains "LeadLines" button linking to dashboard (left) and "AI Agent" button (right)
   - Left sidebar: Contains navigation links in descending order (Dashboard, CSV Upload, Submissions) and profile icon at bottom
-  - Contained scrolling: Main content area has its own scrolling independent of the top panel and sidebar
-  - Improved sidebar width: Sidebar width is optimized for better text readability and content fitting
+  - Strict scroll containment: Scrolling is strictly contained within the main content area only, with top panel and sidebar remaining fixed
+  - Optimized sidebar width: Sidebar width is set for better text readability and content fitting
   - Dynamic dropdown: Profile dropdown is contained within the sidebar width
 
 ### Routes and Navigation Paths
 
 The application uses the following URL paths:
 - `/dashboard` - Main dashboard view
-- `/upload` - CSV upload interface (uses JobPostingForm component)
+- `/upload` - CSV upload interface with drag-and-drop file upload functionality
 - `/submissions` - Workflow submissions management
 - `/profile` - User profile management (formerly "Settings")
 - `/agent` - AI Agent interface
 - `/login` - Login page with auto-redirect for authenticated users
 - `/register` - Registration page with auto-redirect for authenticated users
+
+### CSV Upload Functionality
+
+The CSV upload functionality is implemented through:
+- `src/components/forms/csvUpload/CSVUploadForm.jsx` - Form component for uploading CSV files
+- `src/components/upload/UploadPage.jsx` - Page component that integrates the CSV upload form
+- Features include:
+  - Drag and drop file upload
+  - File type and size validation
+  - Multiple file selection
+  - Email count specification
+  - Additional notes field
+  - Form validation and error handling
+  - Success/error status messages
 
 ### Database Integration
 
@@ -106,12 +124,14 @@ The UI is organized into several key areas:
 - `src/components/profile/Profile.jsx` - User profile management
 - `src/components/submissions/SubmissionsPage.jsx` - Workflow submissions management
 - `src/components/agent/AgentPage.jsx` - AI Agent interface
+- `src/components/upload/UploadPage.jsx` - CSV file upload interface
 
 ### Forms
 
 The application includes several form components for different purposes:
+- `src/components/forms/csvUpload/CSVUploadForm.jsx` - CSV file upload for email sequence generation
 - `src/components/forms/emailAccount/EmailSubmissionForm.jsx` - Email account submission
-- `src/components/forms/jobPosting/JobPostingForm.jsx` - Job posting campaign creation (used for CSV Upload)
+- `src/components/forms/jobPosting/JobPostingForm.jsx` - Job posting campaign creation
 
 ## Development Notes
 
@@ -121,4 +141,4 @@ The application includes several form components for different purposes:
 - External service integrations include Airtable, Instantly.ai, and potentially others
 - The UI follows a consistent design pattern with a left sidebar and top panel visible on all sections
 - Navigation is organized with Dashboard, CSV Upload, and Submissions in the sidebar, and AI Agent in the top panel
-- Scrolling is contained within the main content area for better user experience
+- Scrolling is strictly contained within the main content area for an app-like user experience

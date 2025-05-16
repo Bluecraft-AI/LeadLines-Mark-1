@@ -14,6 +14,7 @@ import NotFound from './components/common/NotFound';
 import EmailSubmissionForm from './components/forms/emailAccount/EmailSubmissionForm';
 import CalendarEmbed from './components/calendar/CalendarEmbed';
 import SubmissionsPage from './components/submissions/SubmissionsPage';
+import UploadPage from './components/upload/UploadPage';
 import AgentPage from './components/agent/AgentPage';
 
 // Context Providers
@@ -59,7 +60,7 @@ function AppRoutes() {
         path="/upload" 
         element={
           <ProtectedRoute>
-            <MainLayout><JobPostingForm /></MainLayout>
+            <MainLayout><UploadPage /></MainLayout>
           </ProtectedRoute>
         } 
       />
