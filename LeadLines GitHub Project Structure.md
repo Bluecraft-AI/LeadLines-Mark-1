@@ -72,10 +72,9 @@ The authentication system uses Firebase for user management and is implemented t
 
 The application uses a consistent layout structure across all pages:
 - `src/components/common/MainLayout.jsx` - Main application layout with:
-  - Top panel: Contains the AI Agent button on the right side
-  - Left sidebar: Contains the LeadLines button at the top, followed by navigation menu items
-  - LeadLines button: Positioned at the top of the sidebar, vertically aligned with the top panel
-  - Navigation menu: Dashboard, CSV Upload, and Submissions links below the LeadLines button
+  - Top panel: Contains the LeadLines button positioned on the left side and AI Agent button on the right
+  - LeadLines button: Positioned within the top panel, horizontally aligned above the sidebar
+  - Left sidebar: Contains navigation menu items (Dashboard, CSV Upload, Submissions)
   - Profile icon: Positioned at the bottom of the sidebar with dropdown menu
   - Strict scroll containment: Scrolling is strictly contained within the main content area only
   - Responsive design: Optimized for various screen sizes while maintaining alignment
@@ -142,5 +141,5 @@ The application includes several form components for different purposes:
 - Data persistence uses Supabase as the primary database
 - External service integrations include Airtable, Instantly.ai, and potentially others
 - The UI follows a consistent design pattern with a left sidebar and top panel visible on all sections
-- Navigation is organized with LeadLines at the top of the sidebar, followed by Dashboard, CSV Upload, and Submissions links
+- Navigation is organized with LeadLines in the top panel above the sidebar, followed by Dashboard, CSV Upload, and Submissions links in the sidebar
 - Scrolling is strictly contained within the main content area for an app-like user experience

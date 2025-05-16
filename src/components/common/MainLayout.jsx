@@ -62,16 +62,24 @@ const MainLayout = ({ children }) => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      {/* Top Panel - fixed */}
-      <header className="bg-secondary text-text-light p-4 pb-3 shadow-md">
+      {/* Top Panel with LeadLines button positioned to align with sidebar */}
+      <header className="bg-secondary text-text-light p-4 pb-3 shadow-md relative">
         <div className="container mx-auto flex justify-between items-center">
           {showNav && (
             <>
+              {/* LeadLines button positioned to align with sidebar */}
+              <div className="absolute left-0 top-0 w-44 h-full flex items-center bg-secondary">
+                <Link 
+                  to="/dashboard" 
+                  className="text-2xl font-bold hover:text-accent transition-colors block px-4 py-2 text-center w-full"
+                >
+                  LeadLines
+                </Link>
+              </div>
+              
               {/* Empty div to maintain layout balance */}
-              <div className="w-44 flex items-center">
-                <div className="w-full">
-                  {/* This space is intentionally left empty */}
-                </div>
+              <div className="w-44 invisible">
+                {/* This space is intentionally left empty */}
               </div>
               
               {/* AI Agent button on the right */}
@@ -97,19 +105,9 @@ const MainLayout = ({ children }) => {
         {/* Left Sidebar - fixed, width adjusted to fit CSV Upload text */}
         {showNav && (
           <aside className="w-44 bg-secondary text-text-light p-3 pt-2 flex flex-col overflow-hidden">
-            {/* LeadLines button at the top of sidebar */}
-            <div className="mb-4 -mt-1">
-              <Link 
-                to="/dashboard" 
-                className="text-2xl font-bold hover:text-accent transition-colors block px-4 py-2 text-center"
-              >
-                LeadLines
-              </Link>
-            </div>
-            
             {/* Top Navigation Links */}
             <nav className="mb-auto overflow-y-auto">
-              <ul className="space-y-3">
+              <ul className="space-y-3 mt-2">
                 <li>
                   <Link 
                     to="/dashboard" 
