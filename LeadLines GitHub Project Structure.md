@@ -72,7 +72,7 @@ The authentication system uses Firebase for user management and is implemented t
 
 The application uses a consistent layout structure across all pages:
 - `src/components/common/MainLayout.jsx` - Main application layout with:
-  - Top panel: Contains "LeadLines" text centered above the sidebar with matching left padding
+  - Top panel: Contains "LeadLines" text perfectly centered above the sidebar with consistent padding
   - Left sidebar: Width optimized (w-44) to fit "CSV Upload" text with standard text size
   - Profile icon: Positioned at the bottom of the sidebar with dropdown menu
   - Strict scroll containment: Scrolling is strictly contained within the main content area only

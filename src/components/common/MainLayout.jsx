@@ -67,14 +67,16 @@ const MainLayout = ({ children }) => {
         <div className="container mx-auto flex justify-between items-center">
           {showNav && (
             <>
-              {/* LeadLines button centered above sidebar - aligned with sidebar buttons */}
-              <div className="w-44 flex justify-center">
-                <Link 
-                  to="/dashboard" 
-                  className="text-2xl font-bold hover:text-accent transition-colors pl-4"
-                >
-                  LeadLines
-                </Link>
+              {/* LeadLines button container with exact width of sidebar */}
+              <div className="w-44 flex items-center">
+                <div className="w-full px-4">
+                  <Link 
+                    to="/dashboard" 
+                    className="text-2xl font-bold hover:text-accent transition-colors block text-center"
+                  >
+                    LeadLines
+                  </Link>
+                </div>
               </div>
               
               {/* AI Agent button on the right */}
