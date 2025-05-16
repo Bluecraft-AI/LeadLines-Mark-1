@@ -24,7 +24,7 @@ LeadLines-Mark-1/
 │   │   │   └── CalendarEmbed.jsx # Embedded calendar component
 │   │   ├── common/             # Shared components
 │   │   │   ├── Home.jsx        # Homepage component
-│   │   │   ├── MainLayout.jsx  # Main application layout with left sidebar and top panel
+│   │   │   ├── MainLayout.jsx  # Main application layout with optimized left sidebar and top panel
 │   │   │   └── NotFound.jsx    # 404 page component
 │   │   ├── dashboard/          # Dashboard functionality
 │   │   │   └── Dashboard.jsx   # Main dashboard component
@@ -53,7 +53,7 @@ LeadLines-Mark-1/
 │   │   ├── AirtableService.js  # Airtable API service
 │   │   ├── InstantlyService.js # Instantly.ai integration
 │   │   ├── UserService.js      # User management service
-│   │   └── WorkflowService.js  # Workflow submission tracking
+│   │   └── WorkflowService.js  # Workflow management service
 │   ├── styles/                 # CSS and styling files
 │   ├── App.jsx                 # Main application component with routes
 │   └── main.jsx                # Application entry point
@@ -72,11 +72,12 @@ The authentication system uses Firebase for user management and is implemented t
 
 The application uses a consistent layout structure across all pages:
 - `src/components/common/MainLayout.jsx` - Main application layout with:
-  - Top panel: Contains "LeadLines" button linking to dashboard (left) and "AI Agent" button (right)
-  - Left sidebar: Contains navigation links in descending order (Dashboard, CSV Upload, Submissions) and profile icon at bottom
-  - Strict scroll containment: Scrolling is strictly contained within the main content area only, with top panel and sidebar remaining fixed
-  - Optimized sidebar width: Sidebar width is set for better text readability and content fitting
-  - Dynamic dropdown: Profile dropdown is contained within the sidebar width
+  - Top panel: Contains "LeadLines" text centered above the sidebar with matching left padding
+  - Left sidebar: Thinner width (w-40) with navigation links in descending order (Dashboard, CSV Upload, Submissions)
+  - Profile icon: Positioned at the bottom of the sidebar with dropdown menu
+  - Strict scroll containment: Scrolling is strictly contained within the main content area only
+  - Consistent text alignment: All sidebar elements are evenly and dynamically aligned
+  - Responsive design: Optimized for various screen sizes while maintaining alignment
 
 ### Routes and Navigation Paths
 

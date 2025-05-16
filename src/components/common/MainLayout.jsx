@@ -61,19 +61,21 @@ const MainLayout = ({ children }) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top Panel */}
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Top Panel - fixed */}
       <header className="bg-secondary text-text-light p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           {showNav && (
             <>
-              {/* LeadLines button on the left */}
-              <Link 
-                to="/dashboard" 
-                className="text-2xl font-bold hover:text-accent transition-colors"
-              >
-                LeadLines
-              </Link>
+              {/* LeadLines button centered above sidebar - aligned with sidebar buttons */}
+              <div className="w-40 flex justify-center">
+                <Link 
+                  to="/dashboard" 
+                  className="text-2xl font-bold hover:text-accent transition-colors pl-4"
+                >
+                  LeadLines
+                </Link>
+              </div>
               
               {/* AI Agent button on the right */}
               <Link 
@@ -94,17 +96,17 @@ const MainLayout = ({ children }) => {
         </div>
       </header>
       
-      <div className="flex-grow flex overflow-hidden">
-        {/* Left Sidebar - width increased for better content fitting */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - fixed, slightly thinner */}
         {showNav && (
-          <aside className="w-48 bg-secondary text-text-light p-4 flex flex-col overflow-y-auto">
+          <aside className="w-40 bg-secondary text-text-light p-3 flex flex-col overflow-hidden">
             {/* Top Navigation Links */}
-            <nav className="mb-auto">
-              <ul className="space-y-4">
+            <nav className="mb-auto overflow-y-auto">
+              <ul className="space-y-3">
                 <li>
                   <Link 
                     to="/dashboard" 
-                    className={`block py-2 px-4 rounded-md ${location.pathname === '/dashboard' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
+                    className={`block py-2 px-4 rounded-md text-sm ${location.pathname === '/dashboard' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
                   >
                     Dashboard
                   </Link>
@@ -112,7 +114,7 @@ const MainLayout = ({ children }) => {
                 <li>
                   <Link 
                     to="/upload" 
-                    className={`block py-2 px-4 rounded-md ${location.pathname.startsWith('/upload') ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
+                    className={`block py-2 px-4 rounded-md text-sm ${location.pathname.startsWith('/upload') ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
                   >
                     CSV Upload
                   </Link>
@@ -120,7 +122,7 @@ const MainLayout = ({ children }) => {
                 <li>
                   <Link 
                     to="/submissions" 
-                    className={`block py-2 px-4 rounded-md ${location.pathname === '/submissions' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
+                    className={`block py-2 px-4 rounded-md text-sm ${location.pathname === '/submissions' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
                   >
                     Submissions
                   </Link>
@@ -135,7 +137,7 @@ const MainLayout = ({ children }) => {
                 className="w-full flex items-center justify-center p-2 hover:bg-secondary-dark rounded-md transition-colors"
                 aria-label="Profile menu"
               >
-                <div className="w-10 h-10 rounded-full bg-accent text-text-dark flex items-center justify-center font-medium">
+                <div className="w-8 h-8 rounded-full bg-accent text-text-dark flex items-center justify-center font-medium">
                   {getUserInitial()}
                 </div>
               </button>
@@ -144,14 +146,14 @@ const MainLayout = ({ children }) => {
                 <div className="absolute bottom-full left-0 right-0 mb-2 mx-auto w-auto min-w-full bg-white rounded-md shadow-lg py-1 z-10">
                   <Link 
                     to="/profile" 
-                    className="block px-4 py-2 text-text-dark hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-text-dark hover:bg-gray-100"
                     onClick={() => setDropdownOpen(false)}
                   >
                     Profile
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-text-dark hover:bg-gray-100"
+                    className="block w-full text-left px-4 py-2 text-sm text-text-dark hover:bg-gray-100"
                   >
                     Log Out
                   </button>
@@ -161,10 +163,12 @@ const MainLayout = ({ children }) => {
           </aside>
         )}
         
-        {/* Main Content - with contained scrolling */}
-        <main className="flex-grow overflow-y-auto p-4">
-          <div className="container mx-auto">
-            {children}
+        {/* Main Content - with strictly contained scrolling */}
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto p-4">
+            <div className="container mx-auto">
+              {children}
+            </div>
           </div>
         </main>
       </div>
