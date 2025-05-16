@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -7,8 +7,15 @@ import { useAuth } from '../../contexts/AuthContext';
 const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
+  const { signup, currentUser } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/dashboard');
+    }
+  }, [currentUser, navigate]);
 
   // Validation schema
   const validationSchema = Yup.object({
@@ -40,7 +47,7 @@ const Register = () => {
       setError('');
       setLoading(true);
       await signup(values.email, values.password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError('Failed to create an account. Please try again.');
       console.error(err);
@@ -143,7 +150,7 @@ const Register = () => {
         <div className="mt-4 text-center">
           <p className="text-text-dark">
             Already have an account?{' '}
-            <Link to="/" className="text-secondary hover:text-opacity-80">
+            <Link to="/login" className="text-secondary hover:text-opacity-80">
               Log in
             </Link>
           </p>
