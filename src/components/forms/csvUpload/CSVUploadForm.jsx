@@ -78,6 +78,13 @@ const CSVUploadForm = () => {
     }
   };
 
+  // Handle click on the file drop area to trigger file input
+  const handleFileDropAreaClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   // Process selected files
   const handleFiles = (files) => {
     if (files.length === 0) return;
@@ -230,7 +237,8 @@ const CSVUploadForm = () => {
               </label>
               <div 
                 ref={fileDropAreaRef}
-                className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer hover:border-secondary hover:bg-blue-50 transition-colors"
+                className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer hover:border-secondary hover:bg-blue-50 transition-colors relative"
+                onClick={handleFileDropAreaClick}
               >
                 <div className="text-4xl mb-2">📂</div>
                 <p>Drag & drop files here or click to browse</p>
@@ -239,7 +247,7 @@ const CSVUploadForm = () => {
                   type="file" 
                   id="fileUpload" 
                   ref={fileInputRef}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="hidden"
                   multiple 
                   accept=".csv"
                   onChange={handleFileChange}
@@ -256,7 +264,10 @@ const CSVUploadForm = () => {
                         <button 
                           type="button"
                           className="ml-2 text-red-500 font-bold"
-                          onClick={() => removeFile(index)}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering the file dialog
+                            removeFile(index);
+                          }}
                         >
                           ×
                         </button>

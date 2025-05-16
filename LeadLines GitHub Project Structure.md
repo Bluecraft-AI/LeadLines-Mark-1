@@ -30,7 +30,7 @@ LeadLines-Mark-1/
 │   │   │   └── Dashboard.jsx   # Main dashboard component
 │   │   ├── forms/              # Form components
 │   │   │   ├── csvUpload/      # CSV upload forms
-│   │   │   │   └── CSVUploadForm.jsx # CSV file upload component
+│   │   │   │   └── CSVUploadForm.jsx # CSV file upload component with improved click behavior
 │   │   │   ├── emailAccount/   # Email account forms
 │   │   │   │   └── EmailSubmissionForm.jsx # Email account submission
 │   │   │   └── jobPosting/     # Job posting forms
@@ -93,16 +93,16 @@ The application uses the following URL paths:
 ### CSV Upload Functionality
 
 The CSV upload functionality is implemented through:
-- `src/components/forms/csvUpload/CSVUploadForm.jsx` - Form component for uploading CSV files
-- `src/components/upload/UploadPage.jsx` - Page component that integrates the CSV upload form
-- Features include:
-  - Drag and drop file upload
+- `src/components/forms/csvUpload/CSVUploadForm.jsx` - Form component for uploading CSV files with:
+  - Improved click behavior: File dialog only opens when clicking the upload area, not elsewhere on the page
+  - Drag and drop file upload functionality
   - File type and size validation
   - Multiple file selection
   - Email count specification
   - Additional notes field
   - Form validation and error handling
   - Success/error status messages
+- `src/components/upload/UploadPage.jsx` - Page component that integrates the CSV upload form
 
 ### Database Integration
 
