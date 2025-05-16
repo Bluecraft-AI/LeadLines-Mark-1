@@ -24,7 +24,7 @@ LeadLines-Mark-1/
 │   │   │   └── CalendarEmbed.jsx # Embedded calendar component
 │   │   ├── common/             # Shared components
 │   │   │   ├── Home.jsx        # Homepage component
-│   │   │   ├── MainLayout.jsx  # Main application layout with right sidebar and top panel
+│   │   │   ├── MainLayout.jsx  # Main application layout with left sidebar and top panel
 │   │   │   └── NotFound.jsx    # 404 page component
 │   │   ├── dashboard/          # Dashboard functionality
 │   │   │   └── Dashboard.jsx   # Main dashboard component
@@ -69,8 +69,10 @@ The authentication system uses Firebase for user management and is implemented t
 The application uses a consistent layout structure across all pages:
 - `src/components/common/MainLayout.jsx` - Main application layout with:
   - Top panel: Contains "LeadLines" button linking to dashboard (left) and "AI Agent" button (right)
-  - Right sidebar: Contains navigation links in descending order (Dashboard, CSV Upload, Submissions) and profile icon at bottom
-  - Profile dropdown: Provides access to Profile page and Logout functionality
+  - Left sidebar: Contains navigation links in descending order (Dashboard, CSV Upload, Submissions) and profile icon at bottom
+  - Contained scrolling: Main content area has its own scrolling independent of the top panel and sidebar
+  - Improved sidebar width: Sidebar width is optimized for better text readability and content fitting
+  - Dynamic dropdown: Profile dropdown is contained within the sidebar width
 
 ### Routes and Navigation Paths
 
@@ -117,5 +119,6 @@ The application includes several form components for different purposes:
 - Authentication is handled through Firebase
 - Data persistence uses Supabase as the primary database
 - External service integrations include Airtable, Instantly.ai, and potentially others
-- The UI follows a consistent design pattern with a right sidebar and top panel visible on all sections
+- The UI follows a consistent design pattern with a left sidebar and top panel visible on all sections
 - Navigation is organized with Dashboard, CSV Upload, and Submissions in the sidebar, and AI Agent in the top panel
+- Scrolling is contained within the main content area for better user experience

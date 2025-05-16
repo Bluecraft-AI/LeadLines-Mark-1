@@ -95,16 +95,16 @@ const MainLayout = ({ children }) => {
       </header>
       
       <div className="flex-grow flex overflow-hidden">
-        {/* Left Sidebar - moved from right to left and width reduced */}
+        {/* Left Sidebar - width increased for better content fitting */}
         {showNav && (
-          <aside className="w-32 bg-secondary text-text-light p-3 flex flex-col overflow-y-auto">
+          <aside className="w-48 bg-secondary text-text-light p-4 flex flex-col overflow-y-auto">
             {/* Top Navigation Links */}
             <nav className="mb-auto">
               <ul className="space-y-4">
                 <li>
                   <Link 
                     to="/dashboard" 
-                    className={`block py-2 px-3 rounded-md ${location.pathname === '/dashboard' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors text-center`}
+                    className={`block py-2 px-4 rounded-md ${location.pathname === '/dashboard' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
                   >
                     Dashboard
                   </Link>
@@ -112,7 +112,7 @@ const MainLayout = ({ children }) => {
                 <li>
                   <Link 
                     to="/upload" 
-                    className={`block py-2 px-3 rounded-md ${location.pathname === '/upload' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors text-center`}
+                    className={`block py-2 px-4 rounded-md ${location.pathname.startsWith('/upload') ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
                   >
                     CSV Upload
                   </Link>
@@ -120,7 +120,7 @@ const MainLayout = ({ children }) => {
                 <li>
                   <Link 
                     to="/submissions" 
-                    className={`block py-2 px-3 rounded-md ${location.pathname === '/submissions' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors text-center`}
+                    className={`block py-2 px-4 rounded-md ${location.pathname === '/submissions' ? 'bg-accent text-text-dark' : 'hover:bg-secondary-dark'} transition-colors`}
                   >
                     Submissions
                   </Link>
@@ -141,7 +141,7 @@ const MainLayout = ({ children }) => {
               </button>
               
               {dropdownOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                <div className="absolute bottom-full left-0 right-0 mb-2 mx-auto w-auto min-w-full bg-white rounded-md shadow-lg py-1 z-10">
                   <Link 
                     to="/profile" 
                     className="block px-4 py-2 text-text-dark hover:bg-gray-100"
