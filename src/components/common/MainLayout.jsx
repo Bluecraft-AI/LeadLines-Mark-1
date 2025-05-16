@@ -67,12 +67,12 @@ const MainLayout = ({ children }) => {
         <div className="container mx-auto flex justify-between items-center">
           {showNav && (
             <>
-              {/* LeadLines button container with exact width of sidebar */}
+              {/* LeadLines button positioned directly above sidebar menu options */}
               <div className="w-44 flex items-center">
-                <div className="w-full px-4">
+                <div className="w-full">
                   <Link 
                     to="/dashboard" 
-                    className="text-2xl font-bold hover:text-accent transition-colors block text-center"
+                    className="text-2xl font-bold hover:text-accent transition-colors block px-4 text-left"
                   >
                     LeadLines
                   </Link>
