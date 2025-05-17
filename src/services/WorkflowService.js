@@ -1,44 +1,8 @@
 // Fix for the WorkflowService import path issues
 // This file should be placed in the src/services directory
 
-// Using a try-catch to handle potential import errors
-let supabase;
-try {
-  // Try the correct import path first
-  supabase = require('../config/supabase').supabase;
-} catch (error) {
-  try {
-    // Try alternate import path
-    supabase = require('../../config/supabase').supabase;
-  } catch (error) {
-    // If all imports fail, create a mock object
-    console.error('Error importing supabase in WorkflowService:', error);
-    supabase = {
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            data: [],
-            error: null
-          }),
-          single: () => ({
-            data: null,
-            error: null
-          })
-        }),
-        insert: () => ({
-          data: null,
-          error: null
-        }),
-        update: () => ({
-          eq: () => ({
-            data: null,
-            error: null
-          })
-        })
-      })
-    };
-  }
-}
+// Using ES module imports instead of CommonJS require
+import { supabase } from '../config/supabase';
 
 class WorkflowService {
   // Fetch user's workflow submission counts
