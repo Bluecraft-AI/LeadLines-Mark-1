@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../../../config/supabase';
+import SubmissionsService from '../../../services/SubmissionsService';
 
 const CSVUploadForm = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -139,22 +142,59 @@ const CSVUploadForm = () => {
     setIsSubmitting(true);
     
     try {
+      // Generate UUID for this submission
+      const submissionId = uuidv4();
+      
       // Create FormData object
       const formData = new FormData();
+      formData.append('submission_id', submissionId);
+      formData.append('user_email', currentUser.email);
       
       // Add email count field if it has a value
       if (emailCount.trim()) {
-        formData.append('number of emails', emailCount);
+        formData.append('number_of_emails', emailCount);
       }
       
       // Add notes field if it has content
       if (notes.trim()) {
-        formData.append('additional notes', notes);
+        formData.append('additional_notes', notes);
       }
       
       // Add files
       for (let i = 0; i < selectedFiles.length; i++) {
         formData.append('files', selectedFiles[i]);
+        
+        // Create submission record in Supabase
+        const { data, error } = await SubmissionsService.createSubmission({
+          id: submissionId,
+          user_id: currentUser.uid,
+          user_email: currentUser.email,
+          original_filename: selectedFiles[i].name,
+          custom_name: selectedFiles[i].name, // Initially set custom name to original filename
+          email_count: parseInt(emailCount) || 0,
+          notes: notes
+        });
+        
+        if (error) {
+          showStatusMessage('Error creating submission record. Please try again.', 'error');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Upload file to Supabase Storage
+        const { error: uploadError } = await SubmissionsService.uploadFile(
+          selectedFiles[i],
+          currentUser.uid,
+          submissionId
+        );
+        
+        if (uploadError) {
+          showStatusMessage('Error uploading file. Please try again.', 'error');
+          // Delete the submission record if file upload fails
+          await SubmissionsService.deleteSubmission(submissionId);
+          setIsSubmitting(false);
+          return;
+        }
       }
       
       // Send data to webhook
@@ -165,11 +205,14 @@ const CSVUploadForm = () => {
       
       if (response.ok) {
         // Success
-        showStatusMessage('Files uploaded successfully!', 'success');
+        showStatusMessage('Files uploaded successfully! Check the Submissions page for status updates.', 'success');
         resetForm();
       } else {
         // Error
         showStatusMessage('Error uploading files. Please try again.', 'error');
+        
+        // Delete the submission record if webhook fails
+        await SubmissionsService.deleteSubmission(submissionId);
       }
     } catch (error) {
       console.error('Error submitting form:', error);

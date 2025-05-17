@@ -109,6 +109,7 @@ The CSV upload functionality is implemented through:
 Database integration is primarily handled through Supabase with configuration in:
 - `src/config/supabase.js` - Supabase client configuration
 - `src/db/` - Database schemas and migration scripts
+- `src/db/supabase_schema.sql` - SQL schema for Supabase database
 
 ### Service Integrations
 
@@ -133,6 +134,37 @@ The application includes several form components for different purposes:
 - `src/components/forms/csvUpload/CSVUploadForm.jsx` - CSV file upload for email sequence generation
 - `src/components/forms/emailAccount/EmailSubmissionForm.jsx` - Email account submission
 - `src/components/forms/jobPosting/JobPostingForm.jsx` - Job posting campaign creation
+
+### CSV Upload and Processing
+
+- `src/components/upload/UploadPage.jsx` - Container for CSV upload functionality
+- `src/components/forms/csvUpload/CSVUploadForm.jsx` - Form for uploading CSV files
+- `src/components/submissions/SubmissionsPage.jsx` - Page for viewing and managing submissions
+- `src/services/SubmissionsService.js` - Service for managing submissions in Supabase
+
+## Routing Structure
+
+The application uses React Router with the following main routes:
+
+- `/` - Landing page
+- `/login` - User login
+- `/register` - User registration
+- `/dashboard` - Main dashboard
+- `/upload` - CSV upload page
+- `/submissions` - Submissions listing page
+- `/profile` - User profile page
+- `/agent` - AI Agent page
+
+## Recent Updates
+
+- Added CSV Upload to Submissions workflow with Supabase integration
+- Implemented submission tracking, status updates, and file storage
+- Added search functionality to Submissions page
+- Added submission name editing capability
+- Implemented download functionality for processed files
+- Moved sidebar from right to left side
+- Updated UI layout and navigation
+- Fixed scroll containment within panels
 
 ## Development Notes
 
