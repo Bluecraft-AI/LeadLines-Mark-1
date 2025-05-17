@@ -179,7 +179,7 @@ class SubmissionsService {
     try {
       const filePath = `${userId}/${submissionId}/${file.name}`;
       const { data, error } = await supabase.storage
-        .from('csv_files')
+        .from('csv-files')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -201,7 +201,7 @@ class SubmissionsService {
   static async getFileDownloadUrl(filePath) {
     try {
       const { data, error } = await supabase.storage
-        .from('csv_files')
+        .from('csv-files')
         .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
 
       if (error) throw error;
