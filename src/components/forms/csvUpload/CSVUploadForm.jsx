@@ -147,6 +147,9 @@ const CSVUploadForm = () => {
       
       // Create FormData object
       const formData = new FormData();
+      
+      // Add submission_id and user_email as regular form fields
+      // These will be included in the JSON body in n8n
       formData.append('submission_id', submissionId);
       formData.append('user_email', currentUser.email);
       
