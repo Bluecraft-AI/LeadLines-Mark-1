@@ -27,7 +27,4 @@ yarn-error.log*
 .idea/
 .vscode/
 *.sublime-project
-*.sublime-workspace
-
-# Credentials
-/src/config/credentials.js 
+*.sublime-workspace 
