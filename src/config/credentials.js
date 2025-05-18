@@ -9,7 +9,7 @@
 const credentials = {
   // OpenAI
   openai: {
-    apiKey: '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', // Replace with your actual OpenAI API key
+    apiKey: process.env.OPENAI_API_KEY || 'OPENAI_API_KEY_PLACEHOLDER', // Replace with environment variable in production
   },
   
   // Supabase (already configured elsewhere, but included here for completeness)
