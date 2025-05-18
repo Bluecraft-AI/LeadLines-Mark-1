@@ -14,12 +14,32 @@ This directory contains Firebase Functions that securely proxy requests to the O
    firebase login
    ```
 
-3. **Set your OpenAI API key as an environment variable**:
+3. **Initialize Firebase in your project (if not already done)**:
+   ```bash
+   cd your-project-directory
+   firebase init
+   ```
+   When prompted:
+   - Select "Functions"
+   - Choose your Firebase project
+   - Select JavaScript
+   - Say yes to ESLint
+   - Say yes to installing dependencies
+
+4. **Set your environment variables**:
    ```bash
    firebase functions:config:set openai.key="your-openai-api-key"
+   firebase functions:config:set supabase.url="your-supabase-url"
+   firebase functions:config:set supabase.key="your-supabase-anon-key"
    ```
 
-4. **Deploy the functions**:
+5. **Install required dependencies**:
+   ```bash
+   cd functions
+   npm install openai cors
+   ```
+
+6. **Deploy the functions**:
    ```bash
    firebase deploy --only functions
    ```
@@ -51,7 +71,20 @@ The following Firebase Functions are available for proxying requests to the Open
 To run the functions locally for development:
 
 ```bash
+firebase functions:config:get > .runtimeconfig.json
 firebase emulators:start --only functions
 ```
 
-This will start the Firebase Functions emulator on port 5001. 
+This will start the Firebase Functions emulator on port 5001.
+
+## Accessing Environment Variables in Functions
+
+The functions code accesses environment variables using:
+
+```javascript
+const openaiApiKey = process.env.OPENAI_API_KEY || functions.config().openai.key;
+const supabaseUrl = functions.config().supabase.url;
+const supabaseKey = functions.config().supabase.key;
+```
+
+This allows for flexibility in both development and production environments. 

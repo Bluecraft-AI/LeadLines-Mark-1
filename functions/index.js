@@ -5,9 +5,15 @@ const { OpenAI } = require('openai');
 
 admin.initializeApp();
 
-// Initialize OpenAI with API key from environment variables
+// Initialize OpenAI with API key from Firebase config
+const openaiApiKey = process.env.OPENAI_API_KEY || functions.config().openai?.key;
+// Get Supabase credentials if needed
+const supabaseUrl = functions.config().supabase?.url;
+const supabaseKey = functions.config().supabase?.key;
+
+// Initialize OpenAI with the API key
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: openaiApiKey,
 });
 
 /**
