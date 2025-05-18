@@ -121,6 +121,7 @@ The application integrates with several external services:
 - `src/services/WorkflowService.js` - Handles workflow submission tracking
 - `src/services/SubmissionsService.js` - Manages CSV submissions with file path normalization for improved download functionality
 - `src/services/AssistantService.js` - Manages OpenAI Assistant interactions with user-specific assistants
+- `src/services/OpenAIService.js` - Initializes the OpenAI API client for communication with the Assistants API
 
 ### User Interface
 
@@ -160,6 +161,8 @@ The application uses React Router with the following main routes:
 
 ## Recent Updates
 
+- Added OpenAI API integration for AI Agent functionality
+- Implemented real-time AI chat with the OpenAI Assistants API
 - Added AI Agent implementation with user-specific assistants and chat interface
 - Implemented thread management for AI conversations
 - Added file upload functionality for AI Assistants

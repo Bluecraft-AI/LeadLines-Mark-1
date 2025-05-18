@@ -1,3 +1,4 @@
+import openai from './OpenAIService';
 import { supabase } from '../config/supabase';
 
 /**
@@ -59,15 +60,15 @@ class AssistantService {
    */
   static async createThread(userId, title = 'New Conversation') {
     try {
-      // This would be replaced with actual OpenAI API call in the backend
-      // For now, we'll simulate the response
-      const threadId = `thread_${Math.random().toString(36).substring(2, 15)}`;
+      // Create a thread in OpenAI
+      const thread = await openai.beta.threads.create();
       
+      // Store the thread in Supabase
       const { data, error } = await supabase
         .from('assistant_threads')
         .insert([{
           user_id: userId,
-          thread_id: threadId,
+          thread_id: thread.id,
           title: title,
         }])
         .select();
@@ -112,16 +113,28 @@ class AssistantService {
    */
   static async uploadFile(file, userId, assistantId) {
     try {
-      // This would be replaced with actual OpenAI API call in the backend
-      // For now, we'll simulate the response
-      const fileId = `file_${Math.random().toString(36).substring(2, 15)}`;
+      // Convert the file to a Blob for OpenAI
+      const blob = new Blob([file], { type: file.type });
       
+      // Upload the file to OpenAI
+      const uploadedFile = await openai.files.create({
+        file: blob,
+        purpose: 'assistants',
+      });
+      
+      // Attach the file to the assistant
+      await openai.beta.assistants.files.create(
+        assistantId,
+        { file_id: uploadedFile.id }
+      );
+      
+      // Store the file reference in Supabase
       const { data, error } = await supabase
         .from('assistant_files')
         .insert([{
           user_id: userId,
           assistant_id: assistantId,
-          file_id: fileId,
+          file_id: uploadedFile.id,
           filename: file.name,
           file_size: file.size,
           file_type: file.type,
@@ -146,8 +159,51 @@ class AssistantService {
    */
   static async sendMessage(threadId, message, userId) {
     try {
-      // This would be replaced with actual OpenAI API call in the backend
-      // For now, we'll simulate the response
+      // Get the assistant ID for this user
+      const { assistantId, error: assistantError } = await this.getUserAssistant(userId);
+      if (assistantError) throw assistantError;
+      
+      // Add the user message to the thread
+      await openai.beta.threads.messages.create(
+        threadId,
+        {
+          role: 'user',
+          content: message
+        }
+      );
+      
+      // Run the assistant on the thread
+      const run = await openai.beta.threads.runs.create(
+        threadId,
+        {
+          assistant_id: assistantId
+        }
+      );
+      
+      // Poll for the run completion
+      let runStatus = await openai.beta.threads.runs.retrieve(
+        threadId,
+        run.id
+      );
+      
+      // Wait for the run to complete
+      while (runStatus.status !== 'completed' && runStatus.status !== 'failed') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        runStatus = await openai.beta.threads.runs.retrieve(
+          threadId,
+          run.id
+        );
+      }
+      
+      if (runStatus.status === 'failed') {
+        throw new Error('Assistant run failed');
+      }
+      
+      // Get the assistant's response
+      const messages = await openai.beta.threads.messages.list(threadId);
+      const assistantMessage = messages.data.find(msg => 
+        msg.role === 'assistant' && msg.run_id === run.id
+      );
       
       // Update the last_message_at timestamp for the thread
       const { error: updateError } = await supabase
@@ -158,10 +214,9 @@ class AssistantService {
 
       if (updateError) throw updateError;
       
-      // In a real implementation, this would call the OpenAI API
-      // and return the assistant's response
+      // Return the assistant's response
       return { 
-        response: "This is a simulated response. In the actual implementation, this would be the assistant's reply.",
+        response: assistantMessage.content[0].text.value,
         error: null 
       };
     } catch (error) {
@@ -178,9 +233,10 @@ class AssistantService {
    */
   static async deleteThread(threadId, userId) {
     try {
-      // This would be replaced with actual OpenAI API call in the backend
-      // For now, we'll just delete from Supabase
+      // Delete the thread from OpenAI
+      await openai.beta.threads.del(threadId);
       
+      // Delete the thread from Supabase
       const { error } = await supabase
         .from('assistant_threads')
         .delete()
@@ -204,9 +260,20 @@ class AssistantService {
    */
   static async deleteFile(fileId, userId) {
     try {
-      // This would be replaced with actual OpenAI API call in the backend
-      // For now, we'll just delete from Supabase
+      // Get the assistant ID for this user
+      const { assistantId, error: assistantError } = await this.getUserAssistant(userId);
+      if (assistantError) throw assistantError;
       
+      // Remove the file from the assistant
+      await openai.beta.assistants.files.del(
+        assistantId,
+        fileId
+      );
+      
+      // Delete the file from OpenAI
+      await openai.files.del(fileId);
+      
+      // Delete the file reference from Supabase
       const { error } = await supabase
         .from('assistant_files')
         .delete()
