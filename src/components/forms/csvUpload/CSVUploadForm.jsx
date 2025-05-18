@@ -148,9 +148,9 @@ const CSVUploadForm = () => {
       // Create FormData object
       const formData = new FormData();
       
-      // Add submission_id and user_email as regular form fields
-      // These will be included in the JSON body in n8n
+      // Add metadata as form fields
       formData.append('submission_id', submissionId);
+      formData.append('user_id', currentUser.uid);
       formData.append('user_email', currentUser.email);
       
       // Add email count field if it has a value
@@ -166,6 +166,7 @@ const CSVUploadForm = () => {
       // Add files
       for (let i = 0; i < selectedFiles.length; i++) {
         formData.append('files', selectedFiles[i]);
+        formData.append('original_filename', selectedFiles[i].name);
         
         // Create submission record in Supabase
         const { data, error } = await SubmissionsService.createSubmission({
@@ -200,10 +201,16 @@ const CSVUploadForm = () => {
         }
       }
       
-      // Send data to webhook
+      // Send data to webhook with additional headers
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+          'x-user-id': currentUser.uid,
+          'x-user-email': currentUser.email,
+          'x-submission-id': submissionId,
+          'x-original-filename': selectedFiles[0]?.name || ''
+        }
       });
       
       if (response.ok) {
