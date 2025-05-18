@@ -118,6 +118,7 @@ The application integrates with several external services:
 - `src/services/InstantlyService.js` - Manages email campaign integration
 - `src/services/UserService.js` - Manages user profile data
 - `src/services/WorkflowService.js` - Handles workflow submission tracking
+- `src/services/SubmissionsService.js` - Manages CSV submissions with file path normalization for improved download functionality
 
 ### User Interface
 
@@ -140,7 +141,7 @@ The application includes several form components for different purposes:
 - `src/components/upload/UploadPage.jsx` - Container for CSV upload functionality
 - `src/components/forms/csvUpload/CSVUploadForm.jsx` - Form for uploading CSV files
 - `src/components/submissions/SubmissionsPage.jsx` - Page for viewing and managing submissions
-- `src/services/SubmissionsService.js` - Service for managing submissions in Supabase
+- `src/services/SubmissionsService.js` - Service for managing submissions in Supabase with file path normalization for reliable file downloads
 
 ## Routing Structure
 
@@ -161,7 +162,7 @@ The application uses React Router with the following main routes:
 - Implemented submission tracking, status updates, and file storage
 - Added search functionality to Submissions page
 - Added submission name editing capability
-- Implemented download functionality for processed files
+- Implemented download functionality for processed files with path normalization
 - Moved sidebar from right to left side
 - Updated UI layout and navigation
 - Fixed scroll containment within panels

@@ -200,9 +200,16 @@ class SubmissionsService {
    */
   static async getFileDownloadUrl(filePath) {
     try {
+      // Normalize the file path by removing the bucket prefix if present
+      const normalizedPath = filePath.startsWith('csv-files/') 
+        ? filePath.substring('csv-files/'.length) 
+        : filePath;
+      
+      console.log('Generating signed URL for path:', normalizedPath);
+      
       const { data, error } = await supabase.storage
         .from('csv-files')
-        .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+        .createSignedUrl(normalizedPath, 60 * 60); // 1 hour expiry
 
       if (error) throw error;
       return { url: data.signedUrl, error: null };
