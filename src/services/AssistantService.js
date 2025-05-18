@@ -1,16 +1,35 @@
-import openai from './OpenAIService';
+import { getAuth } from 'firebase/auth';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { supabase } from '../config/supabase';
 
 /**
- * Service for managing OpenAI Assistant interactions
+ * AssistantService - A secure service for interacting with OpenAI Assistants API
+ * via Firebase Functions proxy
  */
 class AssistantService {
+  constructor() {
+    this.functions = getFunctions();
+    this.auth = getAuth();
+  }
+
+  /**
+   * Get the current user's ID token for authentication
+   * @returns {Promise<string>} The ID token
+   */
+  async getIdToken() {
+    const user = this.auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    return user.getIdToken();
+  }
+
   /**
    * Get the assistant ID for the current user
    * @param {string} userId - Firebase user ID
    * @returns {Promise<Object>} - Assistant ID or error
    */
-  static async getUserAssistant(userId) {
+  async getUserAssistant(userId) {
     try {
       const { data, error } = await supabase
         .from('user_assistants')
@@ -35,7 +54,7 @@ class AssistantService {
    * @param {string} userId - Firebase user ID
    * @returns {Promise<Object>} - List of threads or error
    */
-  static async getUserThreads(userId) {
+  async getUserThreads(userId) {
     try {
       const { data, error } = await supabase
         .from('assistant_threads')
@@ -58,10 +77,12 @@ class AssistantService {
    * @param {string} title - Thread title (optional)
    * @returns {Promise<Object>} - Thread data or error
    */
-  static async createThread(userId, title = 'New Conversation') {
+  async createThread(userId, title = 'New Conversation') {
     try {
-      // Create a thread in OpenAI
-      const thread = await openai.beta.threads.create();
+      // Create a thread using Firebase Function
+      const createThreadFn = httpsCallable(this.functions, 'createThread');
+      const result = await createThreadFn();
+      const thread = result.data;
       
       // Store the thread in Supabase
       const { data, error } = await supabase
@@ -87,7 +108,7 @@ class AssistantService {
    * @param {string} userId - Firebase user ID
    * @returns {Promise<Object>} - List of files or error
    */
-  static async getUserFiles(userId) {
+  async getUserFiles(userId) {
     try {
       const { data, error } = await supabase
         .from('assistant_files')
@@ -111,22 +132,27 @@ class AssistantService {
    * @param {string} assistantId - OpenAI Assistant ID
    * @returns {Promise<Object>} - File data or error
    */
-  static async uploadFile(file, userId, assistantId) {
+  async uploadFile(file, userId, assistantId) {
     try {
-      // Convert the file to a Blob for OpenAI
-      const blob = new Blob([file], { type: file.type });
+      // Convert file to base64
+      const fileData = await this.fileToBase64(file);
       
-      // Upload the file to OpenAI
-      const uploadedFile = await openai.files.create({
-        file: blob,
-        purpose: 'assistants',
+      // Upload file using Firebase Function
+      const uploadFileFn = httpsCallable(this.functions, 'uploadFile');
+      const uploadResult = await uploadFileFn({
+        fileData,
+        fileName: file.name,
+        fileType: file.type,
+        purpose: 'assistants'
       });
+      const uploadedFile = uploadResult.data;
       
       // Attach the file to the assistant
-      await openai.beta.assistants.files.create(
+      const attachFileFn = httpsCallable(this.functions, 'attachFileToAssistant');
+      await attachFileFn({
         assistantId,
-        { file_id: uploadedFile.id }
-      );
+        fileId: uploadedFile.id
+      });
       
       // Store the file reference in Supabase
       const { data, error } = await supabase
@@ -157,53 +183,19 @@ class AssistantService {
    * @param {string} userId - Firebase user ID
    * @returns {Promise<Object>} - Response message or error
    */
-  static async sendMessage(threadId, message, userId) {
+  async sendMessage(threadId, message, userId) {
     try {
       // Get the assistant ID for this user
       const { assistantId, error: assistantError } = await this.getUserAssistant(userId);
       if (assistantError) throw assistantError;
       
-      // Add the user message to the thread
-      await openai.beta.threads.messages.create(
+      // Use the combined Firebase Function to send message and wait for response
+      const sendAndWaitFn = httpsCallable(this.functions, 'sendMessageAndWaitForResponse');
+      const result = await sendAndWaitFn({
         threadId,
-        {
-          role: 'user',
-          content: message
-        }
-      );
-      
-      // Run the assistant on the thread
-      const run = await openai.beta.threads.runs.create(
-        threadId,
-        {
-          assistant_id: assistantId
-        }
-      );
-      
-      // Poll for the run completion
-      let runStatus = await openai.beta.threads.runs.retrieve(
-        threadId,
-        run.id
-      );
-      
-      // Wait for the run to complete
-      while (runStatus.status !== 'completed' && runStatus.status !== 'failed') {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        runStatus = await openai.beta.threads.runs.retrieve(
-          threadId,
-          run.id
-        );
-      }
-      
-      if (runStatus.status === 'failed') {
-        throw new Error('Assistant run failed');
-      }
-      
-      // Get the assistant's response
-      const messages = await openai.beta.threads.messages.list(threadId);
-      const assistantMessage = messages.data.find(msg => 
-        msg.role === 'assistant' && msg.run_id === run.id
-      );
+        message,
+        assistantId
+      });
       
       // Update the last_message_at timestamp for the thread
       const { error: updateError } = await supabase
@@ -216,7 +208,7 @@ class AssistantService {
       
       // Return the assistant's response
       return { 
-        response: assistantMessage.content[0].text.value,
+        response: result.data.response,
         error: null 
       };
     } catch (error) {
@@ -231,10 +223,11 @@ class AssistantService {
    * @param {string} userId - Firebase user ID
    * @returns {Promise<Object>} - Success status or error
    */
-  static async deleteThread(threadId, userId) {
+  async deleteThread(threadId, userId) {
     try {
-      // Delete the thread from OpenAI
-      await openai.beta.threads.del(threadId);
+      // Delete the thread using Firebase Function
+      const deleteThreadFn = httpsCallable(this.functions, 'deleteThread');
+      await deleteThreadFn({ threadId });
       
       // Delete the thread from Supabase
       const { error } = await supabase
@@ -258,20 +251,19 @@ class AssistantService {
    * @param {string} userId - Firebase user ID
    * @returns {Promise<Object>} - Success status or error
    */
-  static async deleteFile(fileId, userId) {
+  async deleteFile(fileId, userId) {
     try {
       // Get the assistant ID for this user
       const { assistantId, error: assistantError } = await this.getUserAssistant(userId);
       if (assistantError) throw assistantError;
       
-      // Remove the file from the assistant
-      await openai.beta.assistants.files.del(
-        assistantId,
-        fileId
-      );
+      // Remove the file from the assistant using Firebase Function
+      const removeFileFn = httpsCallable(this.functions, 'removeFileFromAssistant');
+      await removeFileFn({ assistantId, fileId });
       
-      // Delete the file from OpenAI
-      await openai.files.del(fileId);
+      // Delete the file using Firebase Function
+      const deleteFileFn = httpsCallable(this.functions, 'deleteFile');
+      await deleteFileFn({ fileId });
       
       // Delete the file reference from Supabase
       const { error } = await supabase
@@ -288,6 +280,26 @@ class AssistantService {
       return { success: false, error };
     }
   }
+
+  /**
+   * Convert a file to base64
+   * @param {File} file - The file to convert
+   * @returns {Promise<string>} The base64 string
+   */
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  }
 }
 
-export default AssistantService; 
+// Create a singleton instance
+const assistantService = new AssistantService();
+export default assistantService; 

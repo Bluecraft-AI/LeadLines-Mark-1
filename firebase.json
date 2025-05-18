@@ -1,0 +1,17 @@
+{
+  "functions": {
+    "source": "functions",
+    "predeploy": [
+      "echo 'Running npm install in \"$RESOURCE_DIR\"' && npm --prefix \"$RESOURCE_DIR\" install"
+    ],
+    "runtime": "nodejs18"
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": true
+    }
+  }
+} 
