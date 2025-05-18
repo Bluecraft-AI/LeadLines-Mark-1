@@ -110,6 +110,7 @@ Database integration is primarily handled through Supabase with configuration in
 - `src/config/supabase.js` - Supabase client configuration
 - `src/db/` - Database schemas and migration scripts
 - `src/db/supabase_schema.sql` - SQL schema for Supabase database
+- `src/db/supabase_ai_agent_schema.sql` - SQL schema for AI Agent tables and RLS policies
 
 ### Service Integrations
 
@@ -119,6 +120,7 @@ The application integrates with several external services:
 - `src/services/UserService.js` - Manages user profile data
 - `src/services/WorkflowService.js` - Handles workflow submission tracking
 - `src/services/SubmissionsService.js` - Manages CSV submissions with file path normalization for improved download functionality
+- `src/services/AssistantService.js` - Manages OpenAI Assistant interactions with user-specific assistants
 
 ### User Interface
 
@@ -126,7 +128,7 @@ The UI is organized into several key areas:
 - `src/components/dashboard/Dashboard.jsx` - Main dashboard view
 - `src/components/profile/Profile.jsx` - User profile management
 - `src/components/submissions/SubmissionsPage.jsx` - Workflow submissions management
-- `src/components/agent/AgentPage.jsx` - AI Agent interface
+- `src/components/agent/AgentPage.jsx` - Full-featured AI Agent chat interface with thread and file management
 - `src/components/upload/UploadPage.jsx` - CSV file upload interface
 
 ### Forms
@@ -158,6 +160,10 @@ The application uses React Router with the following main routes:
 
 ## Recent Updates
 
+- Added AI Agent implementation with user-specific assistants and chat interface
+- Implemented thread management for AI conversations
+- Added file upload functionality for AI Assistants
+- Created database schema with Row Level Security for AI Agent data
 - Added CSV Upload to Submissions workflow with Supabase integration
 - Implemented submission tracking, status updates, and file storage
 - Added search functionality to Submissions page
