@@ -102,7 +102,8 @@ class AssistantService {
           user_id: supabaseUuid,
           thread_id: data.threadId,
           title: 'New Conversation',
-          metadata: {}
+          metadata: {},
+          last_message_at: new Date().toISOString()
         });
       
       return data;
@@ -216,7 +217,6 @@ class AssistantService {
   async getRun(threadId, runId) {
     try {
       const response = await fetch(`/api/openai/getRun?threadId=${threadId}&runId=${runId}`, {
-        method: 'GET',
         headers: {
           'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
         }
@@ -241,7 +241,6 @@ class AssistantService {
   async listMessages(threadId) {
     try {
       const response = await fetch(`/api/openai/listMessages?threadId=${threadId}`, {
-        method: 'GET',
         headers: {
           'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
         }
@@ -259,17 +258,12 @@ class AssistantService {
   }
 
   /**
-   * Upload a file
+   * Upload a file to OpenAI
    * @param {File} file - The file to upload
-   * @returns {Promise<Object>} The uploaded file object
+   * @returns {Promise<Object>} The uploaded file information
    */
   async uploadFile(file) {
     try {
-      const assistant = await this.getUserAssistant();
-      if (!assistant) {
-        throw new Error('No assistant found for user');
-      }
-      
       const formData = new FormData();
       formData.append('file', file);
       
@@ -287,19 +281,17 @@ class AssistantService {
       
       const data = await response.json();
       
-      // Store file in Supabase
+      // Store file information in Supabase
       const supabaseUuid = await this.getSupabaseUuid();
-      
       await supabase
         .from('assistant_files')
         .insert({
           user_id: supabaseUuid,
-          assistant_id: assistant.assistant_id,
           file_id: data.fileId,
           filename: file.name,
-          file_size: file.size,
-          file_type: file.type,
-          metadata: {}
+          purpose: 'assistants',
+          bytes: file.size,
+          created_at: new Date().toISOString()
         });
       
       return data;
@@ -312,7 +304,7 @@ class AssistantService {
   /**
    * Attach a file to the assistant
    * @param {string} fileId - The file ID
-   * @returns {Promise<Object>} The result
+   * @returns {Promise<Object>} The response
    */
   async attachFileToAssistant(fileId) {
     try {
@@ -345,7 +337,27 @@ class AssistantService {
   }
 
   /**
-   * Get all files for the current user's assistant
+   * Upload a file and attach it to the assistant
+   * @param {File} file - The file to upload
+   * @returns {Promise<Object>} The response
+   */
+  async uploadFileToAssistant(file) {
+    try {
+      // Upload file
+      const uploadResult = await this.uploadFile(file);
+      
+      // Attach file to assistant
+      await this.attachFileToAssistant(uploadResult.fileId);
+      
+      return uploadResult;
+    } catch (error) {
+      console.error('Error uploading file to assistant:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all files for the current user
    * @returns {Promise<Array>} Array of files
    */
   async getFiles() {
@@ -369,24 +381,26 @@ class AssistantService {
   /**
    * Delete a file
    * @param {string} fileId - The file ID
-   * @returns {Promise<Object>} The result
+   * @returns {Promise<Object>} The response
    */
   async deleteFile(fileId) {
     try {
-      const response = await fetch('/api/openai/deleteFile', {
+      // First remove the file from the assistant
+      await this.removeFileFromAssistant(fileId);
+      
+      // Then delete the file from OpenAI
+      const response = await fetch(`/api/openai/deleteFile?fileId=${fileId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        },
-        body: JSON.stringify({ fileId })
+        }
       });
       
       if (!response.ok) {
         throw new Error(`Error deleting file: ${response.statusText}`);
       }
       
-      // Remove from Supabase
+      // Delete file from Supabase
       const supabaseUuid = await this.getSupabaseUuid();
       await supabase
         .from('assistant_files')
@@ -404,7 +418,7 @@ class AssistantService {
   /**
    * Remove a file from the assistant
    * @param {string} fileId - The file ID
-   * @returns {Promise<Object>} The result
+   * @returns {Promise<Object>} The response
    */
   async removeFileFromAssistant(fileId) {
     try {
@@ -414,7 +428,7 @@ class AssistantService {
       }
       
       const response = await fetch('/api/openai/removeFileFromAssistant', {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
@@ -431,7 +445,7 @@ class AssistantService {
       
       return await response.json();
     } catch (error) {
-      console.error('Error removing file:', error);
+      console.error('Error removing file from assistant:', error);
       throw error;
     }
   }
@@ -439,24 +453,22 @@ class AssistantService {
   /**
    * Delete a thread
    * @param {string} threadId - The thread ID
-   * @returns {Promise<Object>} The result
+   * @returns {Promise<Object>} The response
    */
   async deleteThread(threadId) {
     try {
-      const response = await fetch('/api/openai/deleteThread', {
+      const response = await fetch(`/api/openai/deleteThread?threadId=${threadId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        },
-        body: JSON.stringify({ threadId })
+        }
       });
       
       if (!response.ok) {
         throw new Error(`Error deleting thread: ${response.statusText}`);
       }
       
-      // Remove from Supabase
+      // Delete thread from Supabase
       const supabaseUuid = await this.getSupabaseUuid();
       await supabase
         .from('assistant_threads')
@@ -475,41 +487,42 @@ class AssistantService {
    * Send a message and wait for the assistant's response
    * @param {string} threadId - The thread ID
    * @param {string} content - The message content
-   * @returns {Promise<Object>} The result with messages
+   * @returns {Promise<Object>} The assistant's response
    */
   async sendMessageAndWaitForResponse(threadId, content) {
     try {
-      const assistant = await this.getUserAssistant();
-      if (!assistant) {
-        throw new Error('No assistant found for user');
-      }
+      // Create message
+      await this.createMessage(threadId, content);
       
-      const response = await fetch('/api/openai/sendMessageAndWaitForResponse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        },
-        body: JSON.stringify({ 
-          threadId, 
-          content,
-          assistantId: assistant.assistant_id
-        })
-      });
+      // Run assistant
+      const runResult = await this.runAssistant(threadId);
       
-      if (!response.ok) {
-        throw new Error(`Error sending message: ${response.statusText}`);
-      }
+      // Poll for run completion
+      const maxAttempts = 30;
+      const pollInterval = 1000;
+      let attempts = 0;
       
-      // Update last_message_at in Supabase
-      const supabaseUuid = await this.getSupabaseUuid();
-      await supabase
-        .from('assistant_threads')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('user_id', supabaseUuid)
-        .eq('thread_id', threadId);
+      const pollRun = async () => {
+        attempts++;
+        
+        const runStatus = await this.getRun(threadId, runResult.runId);
+        
+        if (runStatus.status === 'completed') {
+          // Get the messages after run completes
+          const messages = await this.listMessages(threadId);
+          return messages;
+        } else if (runStatus.status === 'failed' || runStatus.status === 'cancelled') {
+          throw new Error(`Run ${runStatus.status}: ${runStatus.error?.message || 'Unknown error'}`);
+        } else if (attempts >= maxAttempts) {
+          throw new Error('Timed out waiting for assistant response');
+        } else {
+          // Wait and poll again
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          return pollRun();
+        }
+      };
       
-      return await response.json();
+      return await pollRun();
     } catch (error) {
       console.error('Error sending message and waiting for response:', error);
       throw error;
@@ -517,4 +530,5 @@ class AssistantService {
   }
 }
 
+// Export a singleton instance
 export default new AssistantService();

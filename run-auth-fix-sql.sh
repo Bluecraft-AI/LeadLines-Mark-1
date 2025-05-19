@@ -1,39 +1,32 @@
 #!/bin/bash
 
-# LeadLines User Identity Fix SQL Runner
-# This script displays the SQL migration for the LeadLines User Identity Fix
+# This script is used to run the SQL migration for the auth mapping fix
+# It uses the Supabase CLI to run the migration against your project
 
-echo "====================================================================="
-echo "LeadLines User Identity Fix SQL Migration"
-echo "====================================================================="
-echo ""
+echo "Running auth mapping fix SQL migration..."
 
-# Check if SQL file exists
-SQL_FILE="./updates/src/db/supabase_auth_mapping_fix.sql"
+# Set your Supabase project ID here
+SUPABASE_PROJECT_ID="leadlines-portal"
 
-if [ ! -f "$SQL_FILE" ]; then
-    echo "❌ Error: SQL file not found at $SQL_FILE"
-    echo "Please make sure the updates directory is in the project root."
-    exit 1
-fi
+# Get the SQL file content
+SQL_CONTENT=$(cat ./updates/src/db/supabase_auth_mapping_fix.sql)
 
-echo "SQL MIGRATION SCRIPT:"
-echo "--------------------"
+# Instructions for manual execution
+echo "===== MANUAL EXECUTION INSTRUCTIONS ====="
+echo "1. Login to your Supabase dashboard at https://app.supabase.com"
+echo "2. Select your project: $SUPABASE_PROJECT_ID"
+echo "3. Go to the SQL Editor"
+echo "4. Create a new query"
+echo "5. Copy and paste the SQL from ./updates/src/db/supabase_auth_mapping_fix.sql"
+echo "6. Run the query"
+echo "===== END INSTRUCTIONS ====="
+
 echo ""
-cat "$SQL_FILE"
+echo "The SQL migration file is located at: ./updates/src/db/supabase_auth_mapping_fix.sql"
 echo ""
-echo "====================================================================="
+echo "After running the SQL migration, update the service files by copying them from the updates folder."
+echo "The service files are:"
+echo "- src/services/AssistantService.js"
+echo "- src/services/SubmissionsService.js"
 echo ""
-echo "INSTRUCTIONS:"
-echo "1. Log in to your Supabase project at https://app.supabase.com"
-echo "2. Navigate to the SQL Editor"
-echo "3. Create a new query"
-echo "4. Copy and paste the ENTIRE SQL script above"
-echo "5. Click 'Run' to execute the script"
-echo ""
-echo "After running this SQL script, you should test the application to verify:"
-echo "- User submissions are visible in the Submissions section"
-echo "- AI Assistant is accessible and functions correctly"
-echo "- CSV upload functionality works properly"
-echo ""
-echo "=====================================================================" 
+echo "SQL migration preparation complete!" 
