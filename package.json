@@ -15,7 +15,8 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@mui/material": "^7.1.0",
+    "@mui/icons-material": "^5.13.0",
+    "@mui/material": "^5.13.0",
     "@supabase/supabase-js": "^2.49.4",
     "airtable": "^0.12.2",
     "axios": "^1.6.2",
