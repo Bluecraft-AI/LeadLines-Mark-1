@@ -1,20 +1,53 @@
+const { onRequest } = require('firebase-functions/v2/https');
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
 const { OpenAI } = require('openai');
+const { createClient } = require('@supabase/supabase-js');
 
 admin.initializeApp();
 
-// Initialize OpenAI with API key from Firebase config
-const openaiApiKey = process.env.OPENAI_API_KEY || functions.config().openai?.key;
-// Get Supabase credentials if needed
-const supabaseUrl = functions.config().supabase?.url;
-const supabaseKey = functions.config().supabase?.key;
+// Get configuration values from Firebase config
+const getConfig = () => {
+  try {
+    // For v2 functions, process.env is the preferred way to access secrets
+    // Fall back to functions.config() for backward compatibility
+    return {
+      openaiApiKey: process.env.OPENAI_API_KEY || functions.config().openai?.key,
+      supabaseUrl: process.env.SUPABASE_URL || functions.config().supabase?.url,
+      supabaseKey: process.env.SUPABASE_KEY || functions.config().supabase?.key
+    };
+  } catch (error) {
+    console.error('Error getting config:', error);
+    return {
+      openaiApiKey: process.env.OPENAI_API_KEY,
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseKey: process.env.SUPABASE_KEY
+    };
+  }
+};
 
 // Initialize OpenAI with the API key
-const openai = new OpenAI({
-  apiKey: openaiApiKey,
-});
+const getOpenAI = () => {
+  const config = getConfig();
+  if (!config.openaiApiKey) {
+    console.error('OpenAI API key is missing');
+    throw new Error('OpenAI API key is required');
+  }
+  return new OpenAI({
+    apiKey: config.openaiApiKey,
+  });
+};
+
+// Initialize Supabase client if credentials are available
+const getSupabase = () => {
+  const config = getConfig();
+  if (!config.supabaseUrl || !config.supabaseKey) {
+    console.error('Supabase credentials are missing');
+    throw new Error('Supabase credentials are required');
+  }
+  return createClient(config.supabaseUrl, config.supabaseKey);
+};
 
 /**
  * Middleware to verify Firebase authentication
@@ -23,7 +56,7 @@ const authenticateUser = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Unauthorized - No valid token provided' });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
@@ -32,17 +65,151 @@ const authenticateUser = async (req, res, next) => {
     return next();
   } catch (error) {
     console.error('Authentication error:', error);
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized - Token verification failed' });
   }
 };
 
 /**
+ * Test function to verify deployment works
+ */
+exports.testFunction = onRequest(
+  { 
+    region: "us-central1",
+  }, 
+  (req, res) => {
+    cors(req, res, async () => {
+      try {
+        // Log environment variables for debugging
+        console.log('Environment variables:', {
+          FUNCTION_TARGET: process.env.FUNCTION_TARGET,
+          NODE_ENV: process.env.NODE_ENV,
+          FIREBASE_CONFIG: process.env.FIREBASE_CONFIG ? 'exists' : 'missing',
+        });
+        
+        // Try to get config and log availability
+        try {
+          const config = getConfig();
+          console.log('Config availability:', {
+            openaiApiKey: config.openaiApiKey ? 'exists' : 'missing',
+            supabaseUrl: config.supabaseUrl ? 'exists' : 'missing',
+            supabaseKey: config.supabaseKey ? 'exists' : 'missing',
+          });
+        } catch (configError) {
+          console.error('Error checking config:', configError);
+        }
+        
+        res.status(200).json({ 
+          message: "Hello from Firebase Functions!",
+          config: process.env.FUNCTION_TARGET || "No config available",
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  }
+);
+
+/**
+ * Config test function to verify configuration access
+ */
+exports.configTest = onRequest(
+  { 
+    region: "us-central1",
+    secrets: ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_KEY"]
+  }, 
+  (req, res) => {
+    cors(req, res, async () => {
+      try {
+        // Log all available environment variables (safely)
+        console.log('Environment variables available:', Object.keys(process.env));
+        
+        // Try both methods of accessing config
+        const envConfig = {
+          openaiApiKey: process.env.OPENAI_API_KEY ? 'exists' : 'missing',
+          supabaseUrl: process.env.SUPABASE_URL ? 'exists' : 'missing',
+          supabaseKey: process.env.SUPABASE_KEY ? 'exists' : 'missing',
+        };
+        
+        let functionsConfig = {};
+        try {
+          const config = functions.config();
+          functionsConfig = {
+            openaiKey: config.openai?.key ? 'exists' : 'missing',
+            supabaseUrl: config.supabase?.url ? 'exists' : 'missing',
+            supabaseKey: config.supabase?.key ? 'exists' : 'missing',
+          };
+        } catch (configError) {
+          console.error('Error accessing functions.config():', configError);
+          functionsConfig = { error: configError.message };
+        }
+        
+        // Get the actual config that would be used
+        const actualConfig = getConfig();
+        
+        res.status(200).json({
+          message: "Config test",
+          envConfig,
+          functionsConfig,
+          actualConfig: {
+            openaiApiKey: actualConfig.openaiApiKey ? 'exists' : 'missing',
+            supabaseUrl: actualConfig.supabaseUrl ? 'exists' : 'missing',
+            supabaseKey: actualConfig.supabaseKey ? 'exists' : 'missing',
+          },
+          // Don't return the full key, just the first few characters for validation
+          openaiKeyPrefix: actualConfig.openaiApiKey ? 
+            actualConfig.openaiApiKey.substring(0, 5) + "..." : "Not available"
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ 
+          error: error.message,
+          configAccess: "Failed to access configuration" 
+        });
+      }
+    });
+  }
+);
+
+/**
+ * Auth test function to verify authentication works
+ */
+exports.authTest = onRequest(
+  { 
+    region: "us-central1",
+  }, 
+  (req, res) => {
+    cors(req, res, async () => {
+      try {
+        await authenticateUser(req, res, async () => {
+          res.status(200).json({ 
+            message: "Authentication successful",
+            user: {
+              email: req.user.email,
+              uid: req.user.uid
+            }
+          });
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  }
+);
+
+/**
  * Create a new thread
  */
-exports.createThread = functions.https.onRequest((req, res) => {
+exports.createThread = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
+        const openai = getOpenAI();
         const thread = await openai.beta.threads.create();
         res.status(200).json(thread);
       });
@@ -56,7 +223,10 @@ exports.createThread = functions.https.onRequest((req, res) => {
 /**
  * Add a message to a thread
  */
-exports.createMessage = functions.https.onRequest((req, res) => {
+exports.createMessage = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -67,6 +237,7 @@ exports.createMessage = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const message = await openai.beta.threads.messages.create(
           threadId,
           {
@@ -87,7 +258,10 @@ exports.createMessage = functions.https.onRequest((req, res) => {
 /**
  * Run an assistant on a thread
  */
-exports.runAssistant = functions.https.onRequest((req, res) => {
+exports.runAssistant = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -98,6 +272,7 @@ exports.runAssistant = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const run = await openai.beta.threads.runs.create(
           threadId,
           {
@@ -117,7 +292,10 @@ exports.runAssistant = functions.https.onRequest((req, res) => {
 /**
  * Get run status
  */
-exports.getRun = functions.https.onRequest((req, res) => {
+exports.getRun = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -127,6 +305,7 @@ exports.getRun = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const run = await openai.beta.threads.runs.retrieve(
           threadId,
           runId
@@ -144,7 +323,10 @@ exports.getRun = functions.https.onRequest((req, res) => {
 /**
  * List messages in a thread
  */
-exports.listMessages = functions.https.onRequest((req, res) => {
+exports.listMessages = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -154,6 +336,7 @@ exports.listMessages = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const messages = await openai.beta.threads.messages.list(threadId);
         
         res.status(200).json(messages);
@@ -168,7 +351,10 @@ exports.listMessages = functions.https.onRequest((req, res) => {
 /**
  * Upload a file to OpenAI
  */
-exports.uploadFile = functions.https.onRequest((req, res) => {
+exports.uploadFile = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -191,6 +377,7 @@ exports.uploadFile = functions.https.onRequest((req, res) => {
         };
         
         // Upload to OpenAI
+        const openai = getOpenAI();
         const uploadedFile = await openai.files.create({
           file,
           purpose,
@@ -208,7 +395,10 @@ exports.uploadFile = functions.https.onRequest((req, res) => {
 /**
  * Attach a file to an assistant
  */
-exports.attachFileToAssistant = functions.https.onRequest((req, res) => {
+exports.attachFileToAssistant = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -219,6 +409,7 @@ exports.attachFileToAssistant = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const attachment = await openai.beta.assistants.files.create(
           assistantId,
           { file_id: fileId }
@@ -236,7 +427,10 @@ exports.attachFileToAssistant = functions.https.onRequest((req, res) => {
 /**
  * Delete a file
  */
-exports.deleteFile = functions.https.onRequest((req, res) => {
+exports.deleteFile = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -246,6 +440,7 @@ exports.deleteFile = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const result = await openai.files.del(fileId);
         
         res.status(200).json(result);
@@ -260,7 +455,10 @@ exports.deleteFile = functions.https.onRequest((req, res) => {
 /**
  * Remove a file from an assistant
  */
-exports.removeFileFromAssistant = functions.https.onRequest((req, res) => {
+exports.removeFileFromAssistant = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -270,6 +468,7 @@ exports.removeFileFromAssistant = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const result = await openai.beta.assistants.files.del(
           assistantId,
           fileId
@@ -287,7 +486,10 @@ exports.removeFileFromAssistant = functions.https.onRequest((req, res) => {
 /**
  * Delete a thread
  */
-exports.deleteThread = functions.https.onRequest((req, res) => {
+exports.deleteThread = onRequest({ 
+  region: "us-central1",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -297,6 +499,7 @@ exports.deleteThread = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
         
+        const openai = getOpenAI();
         const result = await openai.beta.threads.del(threadId);
         
         res.status(200).json(result);
@@ -311,10 +514,12 @@ exports.deleteThread = functions.https.onRequest((req, res) => {
 /**
  * Send a message and wait for assistant response (combined operation)
  */
-exports.sendMessageAndWaitForResponse = functions.runWith({
+exports.sendMessageAndWaitForResponse = onRequest({ 
+  region: "us-central1",
   timeoutSeconds: 540, // 9 minutes
-  memory: '1GB',
-}).https.onRequest((req, res) => {
+  memory: "1GiB",
+  secrets: ["OPENAI_API_KEY"]
+}, (req, res) => {
   cors(req, res, async () => {
     try {
       await authenticateUser(req, res, async () => {
@@ -324,6 +529,8 @@ exports.sendMessageAndWaitForResponse = functions.runWith({
         if (!threadId || !message || !assistantId) {
           return res.status(400).json({ error: 'Missing required parameters' });
         }
+        
+        const openai = getOpenAI();
         
         // Add the user message to the thread
         await openai.beta.threads.messages.create(
@@ -379,4 +586,4 @@ exports.sendMessageAndWaitForResponse = functions.runWith({
       res.status(500).json({ error: error.message });
     }
   });
-}); 
+});

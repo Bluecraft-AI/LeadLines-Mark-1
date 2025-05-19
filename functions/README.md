@@ -1,90 +1,116 @@
-# Firebase Functions OpenAI API Proxy for LeadLines
+# LeadLines Firebase Functions
 
-This directory contains Firebase Functions that securely proxy requests to the OpenAI API for the LeadLines application. This approach keeps your API keys secure on the server side and follows security best practices.
+This directory contains Firebase Cloud Functions for the LeadLines application, providing a secure backend for OpenAI API integration.
 
-## Setup Instructions
+## Recent Updates
 
-1. **Install Firebase CLI**:
+The Firebase Functions implementation has been updated to properly use Firebase Functions v2 configuration and secrets handling:
+
+1. **Secrets Management**: All functions now use the proper secrets declaration for sensitive data
+2. **Enhanced Error Handling**: Improved error handling for missing configuration values
+3. **Runtime Logging**: Added detailed runtime logging for easier troubleshooting
+4. **Updated Documentation**: Added comprehensive documentation for configuration
+
+## Setup and Deployment
+
+### Prerequisites
+
+- Node.js 18 or higher recommended
+- Firebase CLI installed (`npm install -g firebase-tools`)
+- Firebase project created and configured
+
+### Configuration (Updated)
+
+Firebase Functions v2 uses secrets for sensitive data. Set up required secrets using:
+
+```bash
+# From the functions directory
+./set-secrets.sh
+```
+
+This script will guide you through setting:
+- OpenAI API key
+- Supabase URL
+- Supabase anon key
+
+For comprehensive configuration details, see [FIREBASE_FUNCTIONS_CONFIG.md](FIREBASE_FUNCTIONS_CONFIG.md).
+
+### Incremental Deployment
+
+We recommend deploying functions incrementally to test each one:
+
+1. **Test Configuration** (start here): 
    ```bash
-   npm install -g firebase-tools
+   ./deploy-config-test.sh
+   ```
+   Verify that your configuration values and secrets are accessible.
+
+2. **Test Authentication**: 
+   ```bash
+   ./deploy-auth-test.sh
+   ```
+   Test Firebase Authentication integration.
+
+3. **OpenAI Integration**: Deploy these in sequence to test OpenAI integration:
+   ```bash
+   ./deploy-create-thread.sh
+   ./deploy-create-message.sh
+   ./deploy-run-assistant.sh
+   ./deploy-list-messages.sh
+   ./deploy-send-message-and-wait.sh
    ```
 
-2. **Login to Firebase**:
+4. **Full Deployment**: Once all functions are tested individually:
    ```bash
-   firebase login
-   ```
-
-3. **Initialize Firebase in your project (if not already done)**:
-   ```bash
-   cd your-project-directory
-   firebase init
-   ```
-   When prompted:
-   - Select "Functions"
-   - Choose your Firebase project
-   - Select JavaScript
-   - Say yes to ESLint
-   - Say yes to installing dependencies
-
-4. **Set your environment variables**:
-   ```bash
-   firebase functions:config:set openai.key="your-openai-api-key"
-   firebase functions:config:set supabase.url="your-supabase-url"
-   firebase functions:config:set supabase.key="your-supabase-anon-key"
-   ```
-
-5. **Install required dependencies**:
-   ```bash
-   cd functions
-   npm install openai cors
-   ```
-
-6. **Deploy the functions**:
-   ```bash
-   firebase deploy --only functions
+   ./deploy-all.sh
    ```
 
 ## Available Functions
 
-The following Firebase Functions are available for proxying requests to the OpenAI API:
+- **testFunction**: Simple test function to verify deployment works
+- **configTest**: Tests access to configuration values and secrets
+- **authTest**: Tests Firebase authentication
+- **createThread**: Creates a new OpenAI thread
+- **createMessage**: Adds a message to an existing thread
+- **runAssistant**: Runs an assistant on a thread
+- **getRun**: Gets the status of a run
+- **listMessages**: Lists messages in a thread
+- **uploadFile**: Uploads a file to OpenAI
+- **attachFileToAssistant**: Attaches a file to an assistant
+- **deleteFile**: Deletes a file
+- **removeFileFromAssistant**: Removes a file from an assistant
+- **deleteThread**: Deletes a thread
+- **sendMessageAndWaitForResponse**: Combined operation - sends a message and waits for the assistant's response
 
-- `createThread`: Create a new conversation thread
-- `createMessage`: Add a message to a thread
-- `runAssistant`: Run an assistant on a thread
-- `getRun`: Get the status of a run
-- `listMessages`: List messages in a thread
-- `uploadFile`: Upload a file to OpenAI
-- `attachFileToAssistant`: Attach a file to an assistant
-- `deleteFile`: Delete a file
-- `removeFileFromAssistant`: Remove a file from an assistant
-- `deleteThread`: Delete a thread
-- `sendMessageAndWaitForResponse`: Send a message and wait for the assistant's response
+## Testing the API
 
-## Security Features
+All endpoints require a valid Firebase authentication token in the Authorization header:
 
-- All requests are authenticated using Firebase Authentication
-- API keys are stored securely on the server side
-- User data is isolated using proper authentication checks
-
-## Local Development
-
-To run the functions locally for development:
-
-```bash
-firebase functions:config:get > .runtimeconfig.json
-firebase emulators:start --only functions
+```
+Authorization: Bearer <firebase-auth-token>
 ```
 
-This will start the Firebase Functions emulator on port 5001.
+You can generate a token using Firebase Auth in your frontend application or using the Firebase Admin SDK for testing.
 
-## Accessing Environment Variables in Functions
+## Troubleshooting
 
-The functions code accesses environment variables using:
+If you encounter "Precondition failed" errors during deployment:
 
-```javascript
-const openaiApiKey = process.env.OPENAI_API_KEY || functions.config().openai.key;
-const supabaseUrl = functions.config().supabase.url;
-const supabaseKey = functions.config().supabase.key;
-```
+1. Verify all secrets are set correctly using:
+   ```bash
+   npx firebase functions:secrets:list
+   ```
+2. Check the function logs for specific error messages:
+   ```bash
+   npx firebase functions:log
+   ```
+3. Try deploying a single function first to isolate issues:
+   ```bash
+   npx firebase deploy --only functions:configTest
+   ```
 
-This allows for flexibility in both development and production environments. 
+For detailed troubleshooting, refer to [FIREBASE_FUNCTIONS_CONFIG.md](FIREBASE_FUNCTIONS_CONFIG.md).
+
+## Security
+
+These functions use Firebase Authentication to secure all endpoints and Firebase Secrets to secure sensitive API keys and credentials. Each request is validated to ensure it comes from an authenticated user. 
