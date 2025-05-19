@@ -195,4 +195,4 @@ class SubmissionsService {
   }
 }
 
-export default new SubmissionsService();
+export default new SubmissionsService(); 
