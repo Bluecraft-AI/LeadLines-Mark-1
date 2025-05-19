@@ -27,4 +27,16 @@ yarn-error.log*
 .idea/
 .vscode/
 *.sublime-project
-*.sublime-workspace 
+*.sublime-workspace
+
+# Firebase local configuration
+.firebase/
+firebase-debug.log
+ui-debug.log
+
+# package files
+node_modules/
+*/node_modules/
+**/node_modules/
+package-lock.json
+**/package-lock.json 
