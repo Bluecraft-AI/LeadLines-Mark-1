@@ -12,8 +12,11 @@ class SubmissionsService {
    */
   async createSubmission(submissionData) {
     try {
-      // For csv_submissions, we continue using Firebase UID directly
-      // since this table uses TEXT for user_id
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .insert({
@@ -28,7 +31,11 @@ class SubmissionsService {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error creating submission:', error);
@@ -42,13 +49,22 @@ class SubmissionsService {
    */
   async getSubmissions() {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
         .eq('user_id', auth.currentUser.uid)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       return data || [];
     } catch (error) {
       console.error('Error getting submissions:', error);
@@ -63,6 +79,11 @@ class SubmissionsService {
    */
   async getSubmission(id) {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
@@ -70,7 +91,11 @@ class SubmissionsService {
         .eq('user_id', auth.currentUser.uid)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error getting submission:', error);
@@ -86,6 +111,11 @@ class SubmissionsService {
    */
   async updateSubmission(id, updates) {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .update(updates)
@@ -94,7 +124,11 @@ class SubmissionsService {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error updating submission:', error);
@@ -109,13 +143,21 @@ class SubmissionsService {
    */
   async deleteSubmission(id) {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const { error } = await supabase
         .from('csv_submissions')
         .delete()
         .eq('id', id)
         .eq('user_id', auth.currentUser.uid);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Error deleting submission:', error);
       throw error;
@@ -129,13 +171,21 @@ class SubmissionsService {
    */
   async uploadFile(file) {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const filePath = `${auth.currentUser.uid}/${Date.now()}_${file.name}`;
       
       const { error } = await supabase.storage
         .from('csv-files')
         .upload(filePath, file);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Storage error:', error);
+        throw error;
+      }
       
       return filePath;
     } catch (error) {
@@ -151,11 +201,20 @@ class SubmissionsService {
    */
   async downloadFile(filePath) {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase.storage
         .from('csv-files')
         .download(filePath);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Storage error:', error);
+        throw error;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error downloading file:', error);
@@ -170,6 +229,11 @@ class SubmissionsService {
    */
   async searchSubmissions(searchTerm) {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       // If search term is empty, return all submissions
       if (!searchTerm || searchTerm.trim() === '') {
         return this.getSubmissions();
@@ -186,7 +250,11 @@ class SubmissionsService {
         }
       );
       
-      if (error) throw error;
+      if (error) {
+        console.error('Search error:', error);
+        throw error;
+      }
+      
       return data || [];
     } catch (error) {
       console.error('Error searching submissions:', error);

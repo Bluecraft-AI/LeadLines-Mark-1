@@ -11,13 +11,26 @@ class AssistantService {
    */
   async getSupabaseUuid() {
     try {
+      // Ensure user is authenticated
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .rpc('get_or_create_supabase_uuid', {
           p_firebase_uid: auth.currentUser.uid,
           p_email: auth.currentUser.email
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('RPC error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error('Failed to get or create Supabase UUID');
+      }
+      
       return data;
     } catch (error) {
       console.error('Error getting Supabase UUID:', error);
@@ -39,7 +52,15 @@ class AssistantService {
         .eq('user_id', supabaseUuid)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        // If no assistant found, return null instead of throwing an error
+        if (error.code === 'PGRST116') {
+          console.log('No assistant found for user');
+          return null;
+        }
+        throw error;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error getting user assistant:', error);
@@ -53,6 +74,12 @@ class AssistantService {
    */
   async createThread() {
     try {
+      // Ensure user has an assistant
+      const assistant = await this.getUserAssistant();
+      if (!assistant) {
+        throw new Error('No assistant found for user');
+      }
+      
       const response = await fetch('/api/openai/createThread', {
         method: 'POST',
         headers: {
@@ -153,6 +180,9 @@ class AssistantService {
   async runAssistant(threadId) {
     try {
       const assistant = await this.getUserAssistant();
+      if (!assistant) {
+        throw new Error('No assistant found for user');
+      }
       
       const response = await fetch('/api/openai/runAssistant', {
         method: 'POST',
@@ -235,6 +265,11 @@ class AssistantService {
    */
   async uploadFile(file) {
     try {
+      const assistant = await this.getUserAssistant();
+      if (!assistant) {
+        throw new Error('No assistant found for user');
+      }
+      
       const formData = new FormData();
       formData.append('file', file);
       
@@ -254,7 +289,6 @@ class AssistantService {
       
       // Store file in Supabase
       const supabaseUuid = await this.getSupabaseUuid();
-      const assistant = await this.getUserAssistant();
       
       await supabase
         .from('assistant_files')
@@ -283,6 +317,9 @@ class AssistantService {
   async attachFileToAssistant(fileId) {
     try {
       const assistant = await this.getUserAssistant();
+      if (!assistant) {
+        throw new Error('No assistant found for user');
+      }
       
       const response = await fetch('/api/openai/attachFileToAssistant', {
         method: 'POST',
@@ -372,6 +409,9 @@ class AssistantService {
   async removeFileFromAssistant(fileId) {
     try {
       const assistant = await this.getUserAssistant();
+      if (!assistant) {
+        throw new Error('No assistant found for user');
+      }
       
       const response = await fetch('/api/openai/removeFileFromAssistant', {
         method: 'DELETE',
@@ -439,6 +479,11 @@ class AssistantService {
    */
   async sendMessageAndWaitForResponse(threadId, content) {
     try {
+      const assistant = await this.getUserAssistant();
+      if (!assistant) {
+        throw new Error('No assistant found for user');
+      }
+      
       const response = await fetch('/api/openai/sendMessageAndWaitForResponse', {
         method: 'POST',
         headers: {
@@ -448,7 +493,7 @@ class AssistantService {
         body: JSON.stringify({ 
           threadId, 
           content,
-          assistantId: (await this.getUserAssistant()).assistant_id
+          assistantId: assistant.assistant_id
         })
       });
       
