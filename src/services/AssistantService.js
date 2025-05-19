@@ -1,305 +1,481 @@
-import { getAuth } from 'firebase/auth';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { supabase } from '../config/supabase';
+import { auth } from '../config/firebase';
 
 /**
- * AssistantService - A secure service for interacting with OpenAI Assistants API
- * via Firebase Functions proxy
+ * Service for managing OpenAI Assistants through Firebase Functions
  */
 class AssistantService {
-  constructor() {
-    this.functions = getFunctions();
-    this.auth = getAuth();
-  }
-
   /**
-   * Get the current user's ID token for authentication
-   * @returns {Promise<string>} The ID token
+   * Get the Supabase UUID for the current Firebase user
+   * @returns {Promise<string>} The Supabase UUID
    */
-  async getIdToken() {
-    const user = this.auth.currentUser;
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    return user.getIdToken();
-  }
-
-  /**
-   * Get the assistant ID for the current user
-   * @param {string} userId - Firebase user ID
-   * @returns {Promise<Object>} - Assistant ID or error
-   */
-  async getUserAssistant(userId) {
+  async getSupabaseUuid() {
     try {
+      const { data, error } = await supabase
+        .rpc('get_or_create_supabase_uuid', {
+          p_firebase_uid: auth.currentUser.uid,
+          p_email: auth.currentUser.email
+        });
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting Supabase UUID:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the user's assistant
+   * @returns {Promise<Object>} The assistant object
+   */
+  async getUserAssistant() {
+    try {
+      const supabaseUuid = await this.getSupabaseUuid();
+      
       const { data, error } = await supabase
         .from('user_assistants')
-        .select('assistant_id')
-        .eq('user_id', userId)
+        .select('*')
+        .eq('user_id', supabaseUuid)
         .single();
-
-      if (error) {
-        console.error('Error getting user assistant:', error);
-        return { assistantId: null, error };
-      }
-
-      return { assistantId: data.assistant_id, error: null };
+      
+      if (error) throw error;
+      return data;
     } catch (error) {
       console.error('Error getting user assistant:', error);
-      return { assistantId: null, error };
+      throw error;
     }
   }
 
   /**
-   * Get all threads for a user
-   * @param {string} userId - Firebase user ID
-   * @returns {Promise<Object>} - List of threads or error
+   * Create a new thread
+   * @returns {Promise<Object>} The created thread
    */
-  async getUserThreads(userId) {
+  async createThread() {
     try {
-      const { data, error } = await supabase
+      const response = await fetch('/api/openai/createThread', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error creating thread: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Store thread in Supabase
+      const supabaseUuid = await this.getSupabaseUuid();
+      await supabase
         .from('assistant_threads')
-        .select('*')
-        .eq('user_id', userId)
-        .order('last_message_at', { ascending: false });
-
-      if (error) throw error;
+        .insert({
+          user_id: supabaseUuid,
+          thread_id: data.threadId,
+          title: 'New Conversation',
+          metadata: {}
+        });
       
-      return { threads: data, error: null };
-    } catch (error) {
-      console.error('Error getting user threads:', error);
-      return { threads: [], error };
-    }
-  }
-
-  /**
-   * Create a new thread for a user
-   * @param {string} userId - Firebase user ID
-   * @param {string} title - Thread title (optional)
-   * @returns {Promise<Object>} - Thread data or error
-   */
-  async createThread(userId, title = 'New Conversation') {
-    try {
-      // Create a thread using Firebase Function
-      const createThreadFn = httpsCallable(this.functions, 'createThread');
-      const result = await createThreadFn();
-      const thread = result.data;
-      
-      // Store the thread in Supabase
-      const { data, error } = await supabase
-        .from('assistant_threads')
-        .insert([{
-          user_id: userId,
-          thread_id: thread.id,
-          title: title,
-        }])
-        .select();
-
-      if (error) throw error;
-      
-      return { thread: data[0], error: null };
+      return data;
     } catch (error) {
       console.error('Error creating thread:', error);
-      return { thread: null, error };
+      throw error;
     }
   }
 
   /**
-   * Get all files associated with a user's assistant
-   * @param {string} userId - Firebase user ID
-   * @returns {Promise<Object>} - List of files or error
+   * Get all threads for the current user
+   * @returns {Promise<Array>} Array of threads
    */
-  async getUserFiles(userId) {
+  async getThreads() {
     try {
+      const supabaseUuid = await this.getSupabaseUuid();
+      
+      const { data, error } = await supabase
+        .from('assistant_threads')
+        .select('*')
+        .eq('user_id', supabaseUuid)
+        .order('last_message_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error getting threads:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a message in a thread
+   * @param {string} threadId - The thread ID
+   * @param {string} content - The message content
+   * @returns {Promise<Object>} The created message
+   */
+  async createMessage(threadId, content) {
+    try {
+      const response = await fetch('/api/openai/createMessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({ threadId, content })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error creating message: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update last_message_at in Supabase
+      const supabaseUuid = await this.getSupabaseUuid();
+      await supabase
+        .from('assistant_threads')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('user_id', supabaseUuid)
+        .eq('thread_id', threadId);
+      
+      return data;
+    } catch (error) {
+      console.error('Error creating message:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Run the assistant on a thread
+   * @param {string} threadId - The thread ID
+   * @returns {Promise<Object>} The run object
+   */
+  async runAssistant(threadId) {
+    try {
+      const assistant = await this.getUserAssistant();
+      
+      const response = await fetch('/api/openai/runAssistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({ 
+          threadId, 
+          assistantId: assistant.assistant_id 
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error running assistant: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error running assistant:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a run
+   * @param {string} threadId - The thread ID
+   * @param {string} runId - The run ID
+   * @returns {Promise<Object>} The run object
+   */
+  async getRun(threadId, runId) {
+    try {
+      const response = await fetch(`/api/openai/getRun?threadId=${threadId}&runId=${runId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error getting run: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting run:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * List messages in a thread
+   * @param {string} threadId - The thread ID
+   * @returns {Promise<Array>} Array of messages
+   */
+  async listMessages(threadId) {
+    try {
+      const response = await fetch(`/api/openai/listMessages?threadId=${threadId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error listing messages: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error listing messages:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Upload a file
+   * @param {File} file - The file to upload
+   * @returns {Promise<Object>} The uploaded file object
+   */
+  async uploadFile(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/openai/uploadFile', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error uploading file: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Attach a file to the assistant
+   * @param {string} fileId - The file ID
+   * @returns {Promise<Object>} The result object
+   */
+  async attachFileToAssistant(fileId) {
+    try {
+      const assistant = await this.getUserAssistant();
+      
+      const response = await fetch('/api/openai/attachFileToAssistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({ 
+          fileId, 
+          assistantId: assistant.assistant_id 
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error attaching file: ${response.statusText}`);
+      }
+      
+      // Record in Supabase
+      const supabaseUuid = await this.getSupabaseUuid();
+      await supabase
+        .from('assistant_files')
+        .insert({
+          user_id: supabaseUuid,
+          assistant_id: assistant.assistant_id,
+          file_id: fileId,
+          filename: fileId, // Placeholder, will be updated later
+          status: 'active'
+        });
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error attaching file:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all files
+   * @returns {Promise<Array>} Array of files
+   */
+  async getFiles() {
+    try {
+      const supabaseUuid = await this.getSupabaseUuid();
+      
       const { data, error } = await supabase
         .from('assistant_files')
         .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
+        .eq('user_id', supabaseUuid);
+      
       if (error) throw error;
-      
-      return { files: data, error: null };
+      return data || [];
     } catch (error) {
-      console.error('Error getting user files:', error);
-      return { files: [], error };
-    }
-  }
-
-  /**
-   * Upload a file to OpenAI and associate it with the user's assistant
-   * @param {File} file - File to upload
-   * @param {string} userId - Firebase user ID
-   * @param {string} assistantId - OpenAI Assistant ID
-   * @returns {Promise<Object>} - File data or error
-   */
-  async uploadFile(file, userId, assistantId) {
-    try {
-      // Convert file to base64
-      const fileData = await this.fileToBase64(file);
-      
-      // Upload file using Firebase Function
-      const uploadFileFn = httpsCallable(this.functions, 'uploadFile');
-      const uploadResult = await uploadFileFn({
-        fileData,
-        fileName: file.name,
-        fileType: file.type,
-        purpose: 'assistants'
-      });
-      const uploadedFile = uploadResult.data;
-      
-      // Attach the file to the assistant
-      const attachFileFn = httpsCallable(this.functions, 'attachFileToAssistant');
-      await attachFileFn({
-        assistantId,
-        fileId: uploadedFile.id
-      });
-      
-      // Store the file reference in Supabase
-      const { data, error } = await supabase
-        .from('assistant_files')
-        .insert([{
-          user_id: userId,
-          assistant_id: assistantId,
-          file_id: uploadedFile.id,
-          filename: file.name,
-          file_size: file.size,
-          file_type: file.type,
-        }])
-        .select();
-
-      if (error) throw error;
-      
-      return { file: data[0], error: null };
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      return { file: null, error };
-    }
-  }
-
-  /**
-   * Send a message to the assistant and get a response
-   * @param {string} threadId - OpenAI Thread ID
-   * @param {string} message - User message
-   * @param {string} userId - Firebase user ID
-   * @returns {Promise<Object>} - Response message or error
-   */
-  async sendMessage(threadId, message, userId) {
-    try {
-      // Get the assistant ID for this user
-      const { assistantId, error: assistantError } = await this.getUserAssistant(userId);
-      if (assistantError) throw assistantError;
-      
-      // Use the combined Firebase Function to send message and wait for response
-      const sendAndWaitFn = httpsCallable(this.functions, 'sendMessageAndWaitForResponse');
-      const result = await sendAndWaitFn({
-        threadId,
-        message,
-        assistantId
-      });
-      
-      // Update the last_message_at timestamp for the thread
-      const { error: updateError } = await supabase
-        .from('assistant_threads')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('thread_id', threadId)
-        .eq('user_id', userId);
-
-      if (updateError) throw updateError;
-      
-      // Return the assistant's response
-      return { 
-        response: result.data.response,
-        error: null 
-      };
-    } catch (error) {
-      console.error('Error sending message:', error);
-      return { response: null, error };
-    }
-  }
-
-  /**
-   * Delete a thread
-   * @param {string} threadId - OpenAI Thread ID
-   * @param {string} userId - Firebase user ID
-   * @returns {Promise<Object>} - Success status or error
-   */
-  async deleteThread(threadId, userId) {
-    try {
-      // Delete the thread using Firebase Function
-      const deleteThreadFn = httpsCallable(this.functions, 'deleteThread');
-      await deleteThreadFn({ threadId });
-      
-      // Delete the thread from Supabase
-      const { error } = await supabase
-        .from('assistant_threads')
-        .delete()
-        .eq('thread_id', threadId)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      
-      return { success: true, error: null };
-    } catch (error) {
-      console.error('Error deleting thread:', error);
-      return { success: false, error };
+      console.error('Error getting files:', error);
+      throw error;
     }
   }
 
   /**
    * Delete a file
-   * @param {string} fileId - OpenAI File ID
-   * @param {string} userId - Firebase user ID
-   * @returns {Promise<Object>} - Success status or error
+   * @param {string} fileId - The file ID
+   * @returns {Promise<Object>} The result object
    */
-  async deleteFile(fileId, userId) {
+  async deleteFile(fileId) {
     try {
-      // Get the assistant ID for this user
-      const { assistantId, error: assistantError } = await this.getUserAssistant(userId);
-      if (assistantError) throw assistantError;
+      // First, remove the file from the assistant
+      await this.removeFileFromAssistant(fileId);
       
-      // Remove the file from the assistant using Firebase Function
-      const removeFileFn = httpsCallable(this.functions, 'removeFileFromAssistant');
-      await removeFileFn({ assistantId, fileId });
+      // Then delete the file from OpenAI
+      const response = await fetch(`/api/openai/deleteFile?fileId=${fileId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        }
+      });
       
-      // Delete the file using Firebase Function
-      const deleteFileFn = httpsCallable(this.functions, 'deleteFile');
-      await deleteFileFn({ fileId });
+      if (!response.ok) {
+        throw new Error(`Error deleting file: ${response.statusText}`);
+      }
       
-      // Delete the file reference from Supabase
-      const { error } = await supabase
+      // Then delete the file record from Supabase
+      const supabaseUuid = await this.getSupabaseUuid();
+      await supabase
         .from('assistant_files')
         .delete()
-        .eq('file_id', fileId)
-        .eq('user_id', userId);
-
-      if (error) throw error;
+        .eq('user_id', supabaseUuid)
+        .eq('file_id', fileId);
       
-      return { success: true, error: null };
+      return await response.json();
     } catch (error) {
       console.error('Error deleting file:', error);
-      return { success: false, error };
+      throw error;
     }
   }
 
   /**
-   * Convert a file to base64
-   * @param {File} file - The file to convert
-   * @returns {Promise<string>} The base64 string
+   * Remove a file from the assistant
+   * @param {string} fileId - The file ID
+   * @returns {Promise<Object>} The result object
    */
-  fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
-        const base64 = reader.result.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = error => reject(error);
-    });
+  async removeFileFromAssistant(fileId) {
+    try {
+      const assistant = await this.getUserAssistant();
+      
+      const response = await fetch('/api/openai/removeFileFromAssistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({ 
+          fileId, 
+          assistantId: assistant.assistant_id 
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error removing file: ${response.statusText}`);
+      }
+      
+      // Update status in Supabase
+      const supabaseUuid = await this.getSupabaseUuid();
+      await supabase
+        .from('assistant_files')
+        .update({ status: 'removed' })
+        .eq('user_id', supabaseUuid)
+        .eq('file_id', fileId);
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error removing file:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a thread
+   * @param {string} threadId - The thread ID
+   * @returns {Promise<Object>} The result object
+   */
+  async deleteThread(threadId) {
+    try {
+      const response = await fetch(`/api/openai/deleteThread?threadId=${threadId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error deleting thread: ${response.statusText}`);
+      }
+      
+      // Delete thread record from Supabase
+      const supabaseUuid = await this.getSupabaseUuid();
+      await supabase
+        .from('assistant_threads')
+        .delete()
+        .eq('user_id', supabaseUuid)
+        .eq('thread_id', threadId);
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting thread:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send a message and wait for the response
+   * @param {string} threadId - The thread ID
+   * @param {string} content - The message content
+   * @returns {Promise<Object>} The result object
+   */
+  async sendMessageAndWaitForResponse(threadId, content) {
+    try {
+      const assistant = await this.getUserAssistant();
+      
+      const response = await fetch('/api/openai/sendMessageAndWaitForResponse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({
+          threadId,
+          content,
+          assistantId: assistant.assistant_id
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error sending message: ${response.statusText}`);
+      }
+      
+      // Update last_message_at in Supabase
+      const supabaseUuid = await this.getSupabaseUuid();
+      await supabase
+        .from('assistant_threads')
+        .update({ 
+          last_message_at: new Date().toISOString(),
+          metadata: { last_content: content.substring(0, 100) }
+        })
+        .eq('user_id', supabaseUuid)
+        .eq('thread_id', threadId);
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
   }
 }
 
-// Create a singleton instance
-const assistantService = new AssistantService();
-export default assistantService; 
+export default new AssistantService(); 

@@ -1,223 +1,198 @@
 import { supabase } from '../config/supabase';
+import { auth } from '../config/firebase';
 
+/**
+ * Service for managing CSV submissions
+ */
 class SubmissionsService {
   /**
-   * Create a new submission record
-   * @param {Object} submission - Submission data
-   * @param {string} submission.id - UUID for the submission
-   * @param {string} submission.user_id - User ID
-   * @param {string} submission.user_email - User email
-   * @param {string} submission.original_filename - Original filename
-   * @param {string} submission.custom_name - Custom name (defaults to original filename)
-   * @param {number} submission.email_count - Number of emails requested
-   * @param {string} submission.notes - Additional notes
-   * @returns {Promise<Object>} - Created submission or error
+   * Create a new submission
+   * @param {Object} submissionData - The submission data
+   * @returns {Promise<Object>} The created submission
    */
-  static async createSubmission(submission) {
+  async createSubmission(submissionData) {
     try {
+      // For csv_submissions, we continue using Firebase UID directly
+      // since this table uses TEXT for user_id
       const { data, error } = await supabase
         .from('csv_submissions')
-        .insert([{
-          id: submission.id,
-          user_id: submission.user_id,
-          user_email: submission.user_email,
-          original_filename: submission.original_filename,
-          custom_name: submission.custom_name || submission.original_filename,
-          email_count: submission.email_count,
-          notes: submission.notes,
-          status: 'processing'
-        }])
-        .select();
-
+        .insert({
+          user_id: auth.currentUser.uid,
+          user_email: auth.currentUser.email,
+          original_filename: submissionData.originalFilename,
+          custom_name: submissionData.customName,
+          status: 'processing',
+          notes: submissionData.notes,
+          file_path: submissionData.filePath
+        })
+        .select()
+        .single();
+      
       if (error) throw error;
-      return { data: data[0], error: null };
+      return data;
     } catch (error) {
       console.error('Error creating submission:', error);
-      return { data: null, error };
+      throw error;
     }
   }
 
   /**
-   * Get all submissions for a user
-   * @param {string} userId - User ID
-   * @param {string} status - Filter by status (optional)
-   * @param {string} searchTerm - Search term for filtering by name (optional)
-   * @returns {Promise<Object>} - List of submissions or error
+   * Get all submissions for the current user
+   * @returns {Promise<Array>} Array of submissions
    */
-  static async getSubmissions(userId, status = null, searchTerm = null) {
+  async getSubmissions() {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', auth.currentUser.uid)
         .order('created_at', { ascending: false });
-
-      if (status) {
-        query = query.eq('status', status);
-      }
-
-      if (searchTerm) {
-        query = query.or(`custom_name.ilike.%${searchTerm}%,original_filename.ilike.%${searchTerm}%`);
-      }
-
-      const { data, error } = await query;
-
+      
       if (error) throw error;
-      return { data, error: null };
+      return data || [];
     } catch (error) {
-      console.error('Error fetching submissions:', error);
-      return { data: null, error };
+      console.error('Error getting submissions:', error);
+      throw error;
     }
   }
 
   /**
-   * Get a single submission by ID
-   * @param {string} submissionId - Submission UUID
-   * @returns {Promise<Object>} - Submission data or error
+   * Get a submission by ID
+   * @param {string} id - The submission ID
+   * @returns {Promise<Object>} The submission
    */
-  static async getSubmissionById(submissionId) {
+  async getSubmission(id) {
     try {
       const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
-        .eq('id', submissionId)
+        .eq('id', id)
+        .eq('user_id', auth.currentUser.uid)
         .single();
-
+      
       if (error) throw error;
-      return { data, error: null };
+      return data;
     } catch (error) {
-      console.error('Error fetching submission:', error);
-      return { data: null, error };
+      console.error('Error getting submission:', error);
+      throw error;
     }
   }
 
   /**
-   * Update submission status
-   * @param {string} submissionId - Submission UUID
-   * @param {string} status - New status ('processing', 'done', 'error')
-   * @param {string} processedFilePath - Path to processed file (optional)
-   * @returns {Promise<Object>} - Updated submission or error
+   * Update a submission
+   * @param {string} id - The submission ID
+   * @param {Object} updates - The updates to apply
+   * @returns {Promise<Object>} The updated submission
    */
-  static async updateSubmissionStatus(submissionId, status, processedFilePath = null) {
-    try {
-      const updateData = {
-        status,
-        updated_at: new Date().toISOString()
-      };
-
-      if (processedFilePath) {
-        updateData.processed_file_path = processedFilePath;
-      }
-
-      const { data, error } = await supabase
-        .from('csv_submissions')
-        .update(updateData)
-        .eq('id', submissionId)
-        .select();
-
-      if (error) throw error;
-      return { data: data[0], error: null };
-    } catch (error) {
-      console.error('Error updating submission status:', error);
-      return { data: null, error };
-    }
-  }
-
-  /**
-   * Update submission name
-   * @param {string} submissionId - Submission UUID
-   * @param {string} customName - New custom name
-   * @returns {Promise<Object>} - Updated submission or error
-   */
-  static async updateSubmissionName(submissionId, customName) {
+  async updateSubmission(id, updates) {
     try {
       const { data, error } = await supabase
         .from('csv_submissions')
-        .update({
-          custom_name: customName,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', submissionId)
-        .select();
-
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', auth.currentUser.uid)
+        .select()
+        .single();
+      
       if (error) throw error;
-      return { data: data[0], error: null };
+      return data;
     } catch (error) {
-      console.error('Error updating submission name:', error);
-      return { data: null, error };
+      console.error('Error updating submission:', error);
+      throw error;
     }
   }
 
   /**
    * Delete a submission
-   * @param {string} submissionId - Submission UUID
-   * @returns {Promise<Object>} - Result of deletion operation
+   * @param {string} id - The submission ID
+   * @returns {Promise<void>}
    */
-  static async deleteSubmission(submissionId) {
+  async deleteSubmission(id) {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('csv_submissions')
         .delete()
-        .eq('id', submissionId);
-
+        .eq('id', id)
+        .eq('user_id', auth.currentUser.uid);
+      
       if (error) throw error;
-      return { success: true, error: null };
     } catch (error) {
       console.error('Error deleting submission:', error);
-      return { success: false, error };
+      throw error;
     }
   }
 
   /**
-   * Upload a file to Supabase Storage
-   * @param {File} file - File to upload
-   * @param {string} userId - User ID
-   * @param {string} submissionId - Submission UUID
-   * @returns {Promise<Object>} - Upload result or error
+   * Upload a CSV file
+   * @param {File} file - The file to upload
+   * @returns {Promise<string>} The file path
    */
-  static async uploadFile(file, userId, submissionId) {
+  async uploadFile(file) {
     try {
-      const filePath = `${userId}/${submissionId}/${file.name}`;
-      const { data, error } = await supabase.storage
+      const filePath = `${auth.currentUser.uid}/${Date.now()}_${file.name}`;
+      
+      const { error } = await supabase.storage
         .from('csv-files')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
+        .upload(filePath, file);
+      
       if (error) throw error;
-      return { data, error: null };
+      
+      return filePath;
     } catch (error) {
       console.error('Error uploading file:', error);
-      return { data: null, error };
+      throw error;
     }
   }
 
   /**
-   * Get a download URL for a file
-   * @param {string} filePath - Path to the file in storage
-   * @returns {Promise<Object>} - Download URL or error
+   * Download a file
+   * @param {string} filePath - The file path
+   * @returns {Promise<Blob>} The file blob
    */
-  static async getFileDownloadUrl(filePath) {
+  async downloadFile(filePath) {
     try {
-      // Normalize the file path by removing the bucket prefix if present
-      const normalizedPath = filePath.startsWith('csv-files/') 
-        ? filePath.substring('csv-files/'.length) 
-        : filePath;
-      
-      console.log('Generating signed URL for path:', normalizedPath);
-      
       const { data, error } = await supabase.storage
         .from('csv-files')
-        .createSignedUrl(normalizedPath, 60 * 60); // 1 hour expiry
-
+        .download(filePath);
+      
       if (error) throw error;
-      return { url: data.signedUrl, error: null };
+      return data;
     } catch (error) {
-      console.error('Error getting download URL:', error);
-      return { url: null, error };
+      console.error('Error downloading file:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search submissions by name
+   * @param {string} searchTerm - The search term
+   * @returns {Promise<Array>} Array of matching submissions
+   */
+  async searchSubmissions(searchTerm) {
+    try {
+      // If search term is empty, return all submissions
+      if (!searchTerm || searchTerm.trim() === '') {
+        return this.getSubmissions();
+      }
+      
+      // Convert search term to format expected by Supabase text search
+      const formattedTerm = searchTerm.trim().split(/\s+/).join(' & ');
+      
+      const { data, error } = await supabase.rpc(
+        'search_submissions_by_name',
+        {
+          p_user_id: auth.currentUser.uid,
+          p_search_term: formattedTerm
+        }
+      );
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error searching submissions:', error);
+      throw error;
     }
   }
 }
 
-export default SubmissionsService; 
+export default new SubmissionsService(); 
