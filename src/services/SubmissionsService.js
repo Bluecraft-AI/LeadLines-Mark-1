@@ -17,6 +17,8 @@ class SubmissionsService {
         throw new Error('User not authenticated');
       }
       
+      console.log('Getting submissions for user_id:', user.uid);
+      
       // Get submissions directly from Supabase
       const { data, error } = await supabase
         .from('csv_submissions')
@@ -29,6 +31,7 @@ class SubmissionsService {
         throw error;
       }
       
+      console.log('Retrieved submissions:', data);
       return data;
     } catch (error) {
       console.error('Error getting submissions:', error);
@@ -280,6 +283,8 @@ class SubmissionsService {
         throw new Error('User not authenticated');
       }
       
+      console.log('Searching submissions for user_id:', user.uid, 'with term:', searchTerm);
+      
       if (!searchTerm || searchTerm.trim() === '') {
         return this.getSubmissions();
       }
@@ -296,6 +301,7 @@ class SubmissionsService {
         throw error;
       }
       
+      console.log('Search results:', data);
       return data || [];
     } catch (error) {
       console.error('Error searching submissions:', error);
@@ -317,9 +323,13 @@ class SubmissionsService {
         throw new Error('User not authenticated');
       }
       
+      console.log('Uploading CSV file for user_id:', user.uid);
+      
       // Use the provided userId or default to the current user's ID
       const actualUserId = userId || user.uid;
       const filePath = `${actualUserId}/${Date.now()}_${file.name}`;
+      
+      console.log('File path:', filePath);
       
       // Upload file to Supabase Storage
       const { data, error } = await supabase.storage
@@ -330,6 +340,8 @@ class SubmissionsService {
         console.error('Error uploading file:', error);
         throw error;
       }
+      
+      console.log('File uploaded successfully:', data);
       
       // Return the file path for the submission
       return filePath;
@@ -424,6 +436,8 @@ class SubmissionsService {
         throw new Error('User not authenticated');
       }
       
+      console.log('Searching submissions by name for user_id:', user.uid, 'with term:', searchTerm);
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
@@ -436,6 +450,7 @@ class SubmissionsService {
         throw error;
       }
       
+      console.log('Search by name results:', data);
       return data;
     } catch (error) {
       console.error('Error searching submissions:', error);
