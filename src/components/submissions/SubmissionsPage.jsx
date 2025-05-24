@@ -143,33 +143,54 @@ const SubmissionsPage = () => {
   // Handle download action
   const handleDownload = async (submission) => {
     try {
-      // Check if file path exists and is not NULL/MISSING
-      if (!submission.file_path || submission.file_path === 'NULL/MISSING') {
-        console.error('File path is missing or null');
-        setError(`Cannot download: File is still being processed or unavailable.`);
+      // First check processed_file_path (preferred)
+      if (submission.processed_file_path) {
+        console.log('Using processed_file_path for download:', submission.processed_file_path);
+        const downloadUrl = await SubmissionsService.getFileDownloadUrl(submission.processed_file_path);
+        
+        if (!downloadUrl) {
+          console.error('Error getting file URL');
+          setError('Failed to get download link. Please try again.');
+          return;
+        }
+        
+        // Open download in new tab
+        window.open(downloadUrl, '_blank');
         return;
       }
       
-      // Normalize file path if needed
-      const filePath = submission.file_path.startsWith('/') 
-        ? submission.file_path.substring(1) 
-        : submission.file_path;
-      
-      // Get download URL
-      const downloadUrl = await SubmissionsService.getFileDownloadUrl(filePath);
-      
-      if (!downloadUrl) {
-        console.error('Error getting file URL');
-        setError('Failed to get download link. Please try again.');
+      // Fallback to file_path if processed_file_path is not available
+      if (submission.file_path && submission.file_path !== 'NULL/MISSING') {
+        console.log('Using file_path for download:', submission.file_path);
+        const filePath = submission.file_path.startsWith('/') 
+          ? submission.file_path.substring(1) 
+          : submission.file_path;
+          
+        const downloadUrl = await SubmissionsService.getFileDownloadUrl(filePath);
+        
+        if (!downloadUrl) {
+          console.error('Error getting file URL');
+          setError('Failed to get download link. Please try again.');
+          return;
+        }
+        
+        // Open download in new tab
+        window.open(downloadUrl, '_blank');
         return;
       }
       
-      // Open download in new tab
-      window.open(downloadUrl, '_blank');
+      // If neither path is available
+      console.error('No valid file path available for download');
+      setError('Processed file not available for download yet.');
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Failed to download file. Please try again later.');
     }
+  };
+
+  // Function to check if download is available
+  const isDownloadAvailable = (submission) => {
+    return submission.status === 'done' && (submission.processed_file_path || (submission.file_path && submission.file_path !== 'NULL/MISSING'));
   };
 
   // Function to safely get file name from path
@@ -343,10 +364,10 @@ const SubmissionsPage = () => {
                       <button 
                         onClick={() => handleDownload(submission)}
                         className={`text-secondary hover:text-opacity-80 ${
-                          submission.status !== 'done' ? 'opacity-50 cursor-not-allowed' : ''
+                          !isDownloadAvailable(submission) ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
-                        disabled={submission.status !== 'done'}
-                        title={submission.status !== 'done' ? 'Available when processing is complete' : 'Download processed file'}
+                        disabled={!isDownloadAvailable(submission)}
+                        title={!isDownloadAvailable(submission) ? 'Available when processing is complete' : 'Download processed file'}
                       >
                         Download
                       </button>

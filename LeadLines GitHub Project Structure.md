@@ -168,10 +168,12 @@ The application uses React Router with the following main routes:
 
 ## Recent Updates
 
-- Reverted SubmissionsPage.jsx to original table-based UI while maintaining enhanced display logic
-- Fixed display logic to show submissions with NULL/MISSING file paths
-- Added detailed logging for submission data retrieval and display
-- Implemented permissive Supabase policies for Firebase authentication
+- **Download Functionality Fix** - Enhanced `SubmissionsPage.jsx` to properly prioritize `processed_file_path` for downloads with fallback to `file_path`. Added `isDownloadAvailable()` helper function and improved error handling in Supabase configuration.
+- Enhanced `SubmissionsPage.jsx` to properly display all submissions regardless of file_path status.
+- Improved error handling and debugging for submission rendering.
+- Fixed UI rendering for submissions with NULL/MISSING file paths.
+- Added detailed logging for submission data retrieval and display.
+- Implemented permissive Supabase policies for Firebase authentication.
 - Enhanced SubmissionsService.js to handle NULL file_path values for n8n workflow integration
 - Added Firebase authentication headers to Supabase client for seamless integration
 - Updated RLS policies to work with Firebase authenticated users
