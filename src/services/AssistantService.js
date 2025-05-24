@@ -44,8 +44,31 @@ class AssistantService {
    */
   async getUserAssistant() {
     try {
-      const supabaseUuid = await this.getSupabaseUuid();
+      // Ensure user is authenticated
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
       
+      // First get the Supabase UUID from auth_mapping
+      const { data: mappingData, error: mappingError } = await supabase
+        .from('auth_mapping')
+        .select('supabase_uuid')
+        .eq('firebase_uid', user.uid)
+        .single();
+      
+      if (mappingError) {
+        console.error('Error getting user mapping:', mappingError);
+        throw mappingError;
+      }
+      
+      if (!mappingData || !mappingData.supabase_uuid) {
+        throw new Error('User mapping not found');
+      }
+      
+      const supabaseUuid = mappingData.supabase_uuid;
+      
+      // Now get the assistant using the Supabase UUID
       const { data, error } = await supabase
         .from('user_assistants')
         .select('*')
@@ -53,11 +76,7 @@ class AssistantService {
         .single();
       
       if (error) {
-        // If no assistant found, return null instead of throwing an error
-        if (error.code === 'PGRST116') {
-          console.log('No assistant found for user');
-          return null;
-        }
+        console.error('Error getting user assistant:', error);
         throw error;
       }
       
@@ -74,39 +93,19 @@ class AssistantService {
    */
   async createThread() {
     try {
-      // Ensure user has an assistant
-      const assistant = await this.getUserAssistant();
-      if (!assistant) {
-        throw new Error('No assistant found for user');
-      }
-      
-      const response = await fetch('/api/openai/createThread', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error creating thread: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // Store thread in Supabase
-      const supabaseUuid = await this.getSupabaseUuid();
-      await supabase
+      const { data, error } = await supabase
         .from('assistant_threads')
-        .insert({
-          user_id: supabaseUuid,
-          thread_id: data.threadId,
-          title: 'New Conversation',
-          metadata: {},
-          last_message_at: new Date().toISOString()
-        });
+        .insert([
+          { user_id: auth.currentUser.uid }
+        ])
+        .select();
       
-      return data;
+      if (error) {
+        console.error('Error creating thread:', error);
+        throw error;
+      }
+      
+      return data[0];
     } catch (error) {
       console.error('Error creating thread:', error);
       throw error;
@@ -525,6 +524,68 @@ class AssistantService {
       return await pollRun();
     } catch (error) {
       console.error('Error sending message and waiting for response:', error);
+      throw error;
+    }
+  }
+
+  // Get user threads
+  async getUserThreads() {
+    try {
+      const { data, error } = await supabase
+        .from('assistant_threads')
+        .select('*')
+        .eq('user_id', auth.currentUser.uid)
+        .order('last_accessed_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error getting user threads:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error getting user threads:', error);
+      throw error;
+    }
+  }
+
+  // Upload a file for the assistant
+  async uploadAssistantFile(file, threadId = null) {
+    try {
+      const filePath = `${auth.currentUser.uid}/${Date.now()}_${file.name}`;
+      
+      // Upload directly to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('assistant-files')
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        throw uploadError;
+      }
+      
+      // Create file record in database
+      const { data, error } = await supabase
+        .from('assistant_files')
+        .insert([
+          {
+            user_id: auth.currentUser.uid,
+            thread_id: threadId,
+            filename: file.name,
+            file_size: file.size,
+            file_path: filePath
+          }
+        ])
+        .select();
+      
+      if (error) {
+        console.error('Error creating file record:', error);
+        throw error;
+      }
+      
+      return data[0];
+    } catch (error) {
+      console.error('Error uploading assistant file:', error);
       throw error;
     }
   }
