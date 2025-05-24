@@ -68,6 +68,42 @@ try {
   };
 }
 
+/**
+ * Configures the Supabase client with Firebase authentication
+ * This ensures proper ID mapping between Firebase and Supabase
+ * 
+ * @param {Object} firebaseAuth - The Firebase auth instance
+ */
+export const configureSupabaseWithFirebase = (firebaseAuth) => {
+  if (!firebaseAuth) return;
+  
+  // Listen for Firebase auth state changes
+  firebaseAuth.onAuthStateChanged(user => {
+    if (user) {
+      // When Firebase user is authenticated, add their ID to Supabase headers
+      // This allows the backend to identify the user without complex mapping
+      supabase.auth.setAuth(supabaseAnonKey);
+      
+      // Add Firebase auth headers to all Supabase requests
+      supabase.headers = {
+        ...supabase.headers,
+        'x-firebase-auth': 'true',
+        'x-firebase-uid': user.uid
+      };
+      
+      console.log('Configured Supabase with Firebase user:', user.uid);
+    } else {
+      // When logged out, remove the headers
+      const headers = { ...supabase.headers };
+      delete headers['x-firebase-auth'];
+      delete headers['x-firebase-uid'];
+      supabase.headers = headers;
+      
+      console.log('Removed Firebase auth from Supabase client');
+    }
+  });
+};
+
 // Enhanced error handling for download functionality
 export const handleSupabaseError = (error, context = '') => {
   console.error(`Supabase error ${context}:`, error);
