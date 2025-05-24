@@ -2,7 +2,6 @@
 // This file should be placed in the src/config directory
 
 import { createClient } from '@supabase/supabase-js';
-import { auth } from './firebase';
 
 // Supabase configuration
 const supabaseUrl = 'https://jaicupcmdaypybsbbacz.supabase.co';
@@ -12,43 +11,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let supabase;
 try {
   supabase = createClient(supabaseUrl, supabaseAnonKey);
-  
-  // Set up auth state change listener to sync Firebase token with Supabase
-  auth.onIdTokenChanged(async (user) => {
-    if (user) {
-      try {
-        // Get the Firebase ID token
-        const token = await user.getIdToken();
-        
-        // Try to sign in to Supabase with the Firebase token
-        try {
-          // Modern method (if available)
-          const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: 'firebase',
-            token,
-          });
-          
-          if (error) {
-            console.error('Supabase auth error:', error);
-            // Fallback to manual token setting
-            supabase.auth.setAuth(token);
-          } else {
-            console.log('Successfully authenticated with Supabase');
-          }
-        } catch (e) {
-          // Fallback for older versions of supabase-js
-          console.log('Using fallback auth method');
-          supabase.auth.setAuth(token);
-        }
-      } catch (error) {
-        console.error('Error getting Firebase token:', error);
-      }
-    } else {
-      // Sign out from Supabase when Firebase signs out
-      await supabase.auth.signOut();
-    }
-  });
-  
+  console.log('Supabase client initialized successfully');
 } catch (error) {
   console.error('Error initializing Supabase client:', error);
   // Provide a mock client to prevent fatal errors
@@ -75,9 +38,11 @@ try {
         })
       })
     }),
-    auth: {
-      signOut: () => Promise.resolve(),
-      setAuth: () => {}
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: null }),
+        download: () => Promise.resolve({ data: null, error: null })
+      })
     }
   };
 }

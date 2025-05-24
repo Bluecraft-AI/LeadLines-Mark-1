@@ -1,8 +1,8 @@
 import { supabase } from '../config/supabase';
-import authService from './AuthService';
+import { auth } from '../config/firebase';
 
 /**
- * Service for managing CSV submissions
+ * Service for managing CSV submissions with direct Firebase UID
  */
 class SubmissionsService {
   /**
@@ -12,19 +12,22 @@ class SubmissionsService {
    */
   async createSubmission(submissionData) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
       
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
+      // Use Firebase UID directly without Supabase auth
+      const userId = auth.currentUser.uid;
+      const userEmail = auth.currentUser.email;
+      
+      console.log('Creating submission with user_id:', userId);
       
       const { data, error } = await supabase
         .from('csv_submissions')
         .insert({
-          user_id: authService.getCurrentUserId(),
-          user_email: authService.getCurrentUserEmail(),
+          user_id: userId,
+          user_email: userEmail,
           original_filename: submissionData.originalFilename || submissionData.original_filename,
           custom_name: submissionData.customName || submissionData.custom_name,
           status: 'processing',
@@ -53,18 +56,17 @@ class SubmissionsService {
    */
   async getSubmissions() {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
       
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
+      const userId = auth.currentUser.uid;
       
       const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
-        .eq('user_id', authService.getCurrentUserId())
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -86,19 +88,18 @@ class SubmissionsService {
    */
   async getSubmission(id) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
       
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
+      const userId = auth.currentUser.uid;
       
       const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
         .eq('id', id)
-        .eq('user_id', authService.getCurrentUserId())
+        .eq('user_id', userId)
         .single();
       
       if (error) {
@@ -121,19 +122,18 @@ class SubmissionsService {
    */
   async updateSubmission(id, updates) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
       
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
+      const userId = auth.currentUser.uid;
       
       const { data, error } = await supabase
         .from('csv_submissions')
         .update(updates)
         .eq('id', id)
-        .eq('user_id', authService.getCurrentUserId())
+        .eq('user_id', userId)
         .select()
         .single();
       
@@ -156,19 +156,18 @@ class SubmissionsService {
    */
   async deleteSubmission(id) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
       
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
+      const userId = auth.currentUser.uid;
       
       const { error } = await supabase
         .from('csv_submissions')
         .delete()
         .eq('id', id)
-        .eq('user_id', authService.getCurrentUserId());
+        .eq('user_id', userId);
       
       if (error) {
         console.error('Supabase error deleting submission:', error);
@@ -189,16 +188,13 @@ class SubmissionsService {
    */
   async uploadFile(file, userId = null, submissionId = null) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
       
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
-      
       // Use provided userId or default to current user
-      const uid = userId || authService.getCurrentUserId();
+      const uid = userId || auth.currentUser.uid;
       
       // Create file path
       let filePath;
@@ -207,6 +203,8 @@ class SubmissionsService {
       } else {
         filePath = `${uid}/${Date.now()}_${file.name}`;
       }
+      
+      console.log('Uploading file to path:', filePath);
       
       const { data, error } = await supabase.storage
         .from('csv-files')
@@ -234,13 +232,10 @@ class SubmissionsService {
    */
   async downloadFile(filePath) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
-      
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
       
       const { data, error } = await supabase.storage
         .from('csv-files')
@@ -265,13 +260,10 @@ class SubmissionsService {
    */
   async getFileDownloadUrl(filePath) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
-      
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
       
       const { data, error } = await supabase.storage
         .from('csv-files')
@@ -296,29 +288,25 @@ class SubmissionsService {
    */
   async searchSubmissions(searchTerm) {
     try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
+      // Ensure user is authenticated with Firebase
+      if (!auth.currentUser) {
         throw new Error('User not authenticated');
       }
       
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
+      const userId = auth.currentUser.uid;
       
       // If search term is empty, return all submissions
       if (!searchTerm || searchTerm.trim() === '') {
         return this.getSubmissions();
       }
       
-      // Convert search term to format expected by Supabase text search
-      const formattedTerm = searchTerm.trim().split(/\s+/).join(' & ');
-      
-      const { data, error } = await supabase.rpc(
-        'search_submissions_by_name',
-        {
-          p_user_id: authService.getCurrentUserId(),
-          p_search_term: formattedTerm
-        }
-      );
+      // Use ILIKE for simple text search instead of RPC
+      const { data, error } = await supabase
+        .from('csv_submissions')
+        .select('*')
+        .eq('user_id', userId)
+        .or(`custom_name.ilike.%${searchTerm}%,original_filename.ilike.%${searchTerm}%`)
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Search error:', error);
