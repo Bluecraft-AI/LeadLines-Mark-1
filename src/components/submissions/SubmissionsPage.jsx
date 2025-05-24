@@ -1,133 +1,146 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Container, Grid, TextField, Typography, Card, CardContent, CardActions, CircularProgress } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { useAuth } from '../../contexts/AuthContext';
 import SubmissionsService from '../../services/SubmissionsService';
-import MappingModal from './MappingModal';
-import { auth } from '../../config/firebase';
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: theme.shadows[10],
-  },
-}));
-
+// Component for handling Airtable webhook integration
 const SubmissionsPage = () => {
+  const { currentUser } = useAuth();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingSubmission, setEditingSubmission] = useState(null);
-  const [newName, setNewName] = useState('');
-  const [mappingModalOpen, setMappingModalOpen] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [error, setError] = useState(null);
+  const [editName, setEditName] = useState('');
 
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Get current user
-        const user = auth.currentUser;
-        if (!user) {
-          console.error('User not authenticated when fetching submissions');
-          setError('Please log in to view your submissions');
-          setLoading(false);
-          return;
-        }
-        
-        console.log('Fetching submissions for user:', user.uid);
-        const data = await SubmissionsService.getSubmissions();
-        
-        // Log all submissions for debugging
-        console.log(`Retrieved ${data.length} submissions`);
-        data.forEach((submission, index) => {
-          console.log(`Submission ${index + 1}:`, submission);
-        });
-        
-        // Always set submissions, even if empty
-        setSubmissions(data || []);
-      } catch (err) {
-        console.error('Error fetching submissions:', err);
-        setError('Failed to load submissions. Please try again later.');
-        setSubmissions([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSubmissions();
-  }, []);
-
-  const handleSearch = async () => {
+  // Fetch submissions from Supabase
+  const fetchSubmissions = async () => {
     try {
       setLoading(true);
-      setError(null);
       
-      if (!searchTerm.trim()) {
-        // If search term is empty, fetch all submissions
-        const data = await SubmissionsService.getSubmissions();
-        setSubmissions(data || []);
-      } else {
-        // Search by name
-        const data = await SubmissionsService.searchSubmissionsByName(searchTerm);
-        setSubmissions(data || []);
+      // Get current user
+      if (!currentUser) {
+        console.error('User not authenticated when fetching submissions');
+        setError('Please log in to view your submissions');
+        setLoading(false);
+        return;
       }
+      
+      console.log('Fetching submissions for user:', currentUser.uid);
+      
+      // Get submissions directly from service
+      const data = await SubmissionsService.getSubmissions();
+      
+      // Log all submissions for debugging
+      console.log(`Retrieved ${data.length} submissions`);
+      data.forEach((submission, index) => {
+        console.log(`Submission ${index + 1}:`, submission);
+      });
+      
+      // Always set submissions, even if empty
+      setSubmissions(data || []);
+      setError(null);
     } catch (err) {
-      console.error('Error searching submissions:', err);
-      setError('Search failed. Please try again.');
+      console.error('Error fetching submissions:', err);
+      setError('Failed to load submissions. Please try again later.');
+      setSubmissions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditName = (submission) => {
-    setEditingSubmission(submission);
-    setNewName(submission.custom_name || submission.original_filename);
+  // Setup webhook endpoint for Airtable status updates
+  const setupWebhookEndpoint = () => {
+    // This function would be implemented on the server side
+    // It would create an API endpoint that Airtable can call when a record's status changes
+    console.log('Setting up webhook endpoint for Airtable status updates');
   };
 
-  const handleSaveName = async () => {
-    if (!editingSubmission || !newName.trim()) return;
-    
+  // Handle webhook callback (simulated for client-side implementation)
+  const handleStatusUpdate = (recordId, newStatus) => {
+    setSubmissions(prev => 
+      prev.map(submission => 
+        submission.id === recordId 
+          ? { ...submission, status: newStatus } 
+          : submission
+      )
+    );
+  };
+
+  // Effect to fetch submissions on component mount and filter/search change
+  useEffect(() => {
+    if (currentUser) {
+      fetchSubmissions();
+    }
+  }, [currentUser, selectedFilter]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentUser) {
+        fetchSubmissions();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Filter options
+  const filterOptions = [
+    { value: 'all', label: 'All Submissions' },
+    { value: 'processing', label: 'Processing' },
+    { value: 'done', label: 'Done' },
+    { value: 'error', label: 'Error' }
+  ];
+
+  // Handle filter change
+  const handleFilterChange = (e) => {
+    setSelectedFilter(e.target.value);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Start editing submission name
+  const handleEditName = (submission) => {
+    setEditingSubmission(submission.id);
+    setEditName(submission.custom_name || submission.original_filename);
+  };
+
+  // Save edited submission name
+  const handleSaveName = async (submissionId) => {
     try {
-      setLoading(true);
-      await SubmissionsService.updateSubmissionName(editingSubmission.id, newName);
+      if (!editName.trim()) {
+        return;
+      }
       
-      // Update the submission in the local state
-      setSubmissions(submissions.map(sub => 
-        sub.id === editingSubmission.id ? { ...sub, custom_name: newName } : sub
-      ));
+      await SubmissionsService.updateSubmissionName(submissionId, editName.trim());
+      
+      // Update local state
+      setSubmissions(prev => 
+        prev.map(sub => 
+          sub.id === submissionId 
+            ? { ...sub, custom_name: editName.trim() } 
+            : sub
+        )
+      );
       
       setEditingSubmission(null);
-      setNewName('');
     } catch (err) {
       console.error('Error updating submission name:', err);
-      setError('Failed to update name. Please try again.');
-    } finally {
-      setLoading(false);
+      setError('Failed to update submission name. Please try again.');
     }
   };
 
+  // Cancel editing
   const handleCancelEdit = () => {
     setEditingSubmission(null);
-    setNewName('');
+    setEditName('');
   };
 
-  const handleOpenMappingModal = (submission) => {
-    setSelectedSubmission(submission);
-    setMappingModalOpen(true);
-  };
-
-  const handleCloseMappingModal = () => {
-    setMappingModalOpen(false);
-    setSelectedSubmission(null);
-  };
-
+  // Handle download action
   const handleDownload = async (submission) => {
     try {
       // Check if file path exists and is not NULL/MISSING
@@ -155,33 +168,8 @@ const SubmissionsPage = () => {
       window.open(downloadUrl, '_blank');
     } catch (err) {
       console.error('Error downloading file:', err);
-      setError('Download failed. Please try again later.');
+      setError('Failed to download file. Please try again later.');
     }
-  };
-
-  // Function to render status with appropriate styling
-  const renderStatus = (status) => {
-    let color = 'inherit';
-    
-    switch (status?.toLowerCase()) {
-      case 'processing':
-        color = 'orange';
-        break;
-      case 'done':
-        color = 'green';
-        break;
-      case 'error':
-        color = 'red';
-        break;
-      default:
-        color = 'inherit';
-    }
-    
-    return (
-      <Typography variant="body2" color={color} fontWeight="bold">
-        {status || 'Unknown'}
-      </Typography>
-    );
   };
 
   // Function to safely get file name from path
@@ -201,150 +189,191 @@ const SubmissionsPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Submissions
-      </Typography>
-      
-      {/* Search bar */}
-      <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
-        <TextField
-          fullWidth
-          label="Search by name"
-          variant="outlined"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-        />
-        <Button variant="contained" onClick={handleSearch}>
-          Search
-        </Button>
-      </Box>
-      
-      {/* Error message */}
+    <div className="max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h2 className="text-2xl font-bold text-text-dark">Submissions</h2>
+        
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
+          {/* Search input */}
+          <div className="relative w-full md:w-64">
+            <input
+              type="text"
+              placeholder="Search submissions..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary pr-8"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          
+          {/* Filter dropdown */}
+          <div className="flex items-center w-full md:w-auto">
+            <label htmlFor="filter" className="mr-2 text-text-dark whitespace-nowrap">Filter:</label>
+            <select
+              id="filter"
+              value={selectedFilter}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary w-full md:w-auto"
+            >
+              {filterOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            
+            {/* Refresh button */}
+            <button 
+              onClick={fetchSubmissions}
+              className="ml-2 p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              title="Refresh"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {error && (
-        <Box sx={{ mb: 2 }}>
-          <Typography color="error">{error}</Typography>
-        </Box>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
       )}
-      
-      {/* Loading indicator */}
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-      
-      {/* No submissions message */}
-      {!loading && submissions.length === 0 && (
-        <Box sx={{ textAlign: 'center', my: 4 }}>
-          <Typography variant="h6">No submissions found</Typography>
-          <Typography variant="body1" color="textSecondary">
-            Upload a CSV file to get started
-          </Typography>
-        </Box>
-      )}
-      
+
       {/* Debug info - only in development */}
       {process.env.NODE_ENV === 'development' && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-          <Typography variant="subtitle2">Debug Info:</Typography>
-          <Typography variant="body2">Submissions count: {submissions.length}</Typography>
-          <Typography variant="body2">User ID: {auth.currentUser?.uid || 'Not logged in'}</Typography>
-        </Box>
+        <div className="bg-gray-100 p-2 mb-4 rounded text-sm">
+          <p>Debug: Found {submissions.length} submissions</p>
+          <p>User ID: {currentUser?.uid || 'Not logged in'}</p>
+        </div>
       )}
-      
-      {/* Submissions grid */}
-      <Grid container spacing={3}>
-        {submissions.map((submission) => (
-          <Grid item xs={12} sm={6} md={4} key={submission.id}>
-            <StyledCard>
-              <CardContent>
-                {/* Display submission name with edit functionality */}
-                {editingSubmission?.id === submission.id ? (
-                  <Box sx={{ mb: 2 }}>
-                    <TextField
-                      fullWidth
-                      label="New name"
-                      variant="outlined"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      size="small"
-                    />
-                  </Box>
-                ) : (
-                  <Typography variant="h6" component="div" gutterBottom noWrap title={submission.custom_name || submission.original_filename}>
-                    {submission.custom_name || submission.original_filename}
-                  </Typography>
-                )}
-                
-                {/* Status */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="body2" color="textSecondary" sx={{ mr: 1 }}>
-                    Status:
-                  </Typography>
-                  {renderStatus(submission.status)}
-                </Box>
-                
-                {/* Original filename if different from custom name */}
-                {submission.custom_name && submission.custom_name !== submission.original_filename && (
-                  <Typography variant="body2" color="textSecondary" noWrap title={submission.original_filename}>
-                    Original: {submission.original_filename}
-                  </Typography>
-                )}
-                
-                {/* File path - show processing if null */}
-                <Typography variant="body2" color="textSecondary" noWrap>
-                  File: {getFileNameFromPath(submission.file_path)}
-                </Typography>
-                
-                {/* Date */}
-                <Typography variant="body2" color="textSecondary">
-                  Uploaded: {new Date(submission.created_at).toLocaleDateString()}
-                </Typography>
-              </CardContent>
-              
-              <CardActions sx={{ mt: 'auto', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                {/* Edit/Save name buttons */}
-                {editingSubmission?.id === submission.id ? (
-                  <>
-                    <Button size="small" onClick={handleSaveName}>Save</Button>
-                    <Button size="small" onClick={handleCancelEdit}>Cancel</Button>
-                  </>
-                ) : (
-                  <Button size="small" onClick={() => handleEditName(submission)}>
-                    Edit Name
-                  </Button>
-                )}
-                
-                {/* Download button - disabled if file_path is null */}
-                <Button 
-                  size="small" 
-                  onClick={() => handleDownload(submission)}
-                  disabled={!submission.file_path || submission.file_path === 'NULL/MISSING' || submission.status === 'processing'}
-                >
-                  Download
-                </Button>
-                
-                {/* Mapping button */}
-                <Button size="small" onClick={() => handleOpenMappingModal(submission)}>
-                  Mapping
-                </Button>
-              </CardActions>
-            </StyledCard>
-          </Grid>
-        ))}
-      </Grid>
-      
-      {/* Mapping modal */}
-      {selectedSubmission && (
-        <MappingModal
-          open={mappingModalOpen}
-          onClose={handleCloseMappingModal}
-          submission={selectedSubmission}
-        />
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-md">
+            <thead className="bg-gray-100 text-text-dark">
+              <tr>
+                <th className="py-3 px-4 text-left">Name</th>
+                <th className="py-3 px-4 text-left">Original File</th>
+                <th className="py-3 px-4 text-left">Status</th>
+                <th className="py-3 px-4 text-left">Created</th>
+                <th className="py-3 px-4 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {submissions.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="py-8 text-center text-gray-500">
+                    {searchTerm 
+                      ? 'No submissions match your search.' 
+                      : 'No submissions found. Start by uploading a CSV file.'}
+                  </td>
+                </tr>
+              ) : (
+                submissions.map(submission => (
+                  <tr key={submission.id} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="py-3 px-4">
+                      {editingSubmission === submission.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-secondary w-full"
+                            autoFocus
+                          />
+                          <button 
+                            onClick={() => handleSaveName(submission.id)}
+                            className="text-green-600 hover:text-green-800"
+                            title="Save"
+                          >
+                            ✓
+                          </button>
+                          <button 
+                            onClick={handleCancelEdit}
+                            className="text-red-600 hover:text-red-800"
+                            title="Cancel"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{submission.custom_name || submission.original_filename}</span>
+                          <button 
+                            onClick={() => handleEditName(submission)}
+                            className="text-gray-500 hover:text-gray-700"
+                            title="Edit name"
+                          >
+                            ✎
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600 text-sm">{submission.original_filename}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        submission.status === 'done' 
+                          ? 'bg-green-100 text-green-800' 
+                          : submission.status === 'error'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {submission.status === 'processing' ? 'Processing' : 
+                         submission.status === 'done' ? 'Done' : 'Error'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-sm">
+                      {new Date(submission.created_at).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4">
+                      <button 
+                        onClick={() => handleDownload(submission)}
+                        className={`text-secondary hover:text-opacity-80 ${
+                          submission.status !== 'done' ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        disabled={submission.status !== 'done'}
+                        title={submission.status !== 'done' ? 'Available when processing is complete' : 'Download processed file'}
+                      >
+                        Download
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
-    </Container>
+
+      <div className="mt-6 bg-blue-50 p-4 rounded-md border border-blue-200">
+        <h3 className="text-lg font-semibold text-blue-800 mb-2">About CSV Processing</h3>
+        <p className="text-blue-800 mb-2">
+          LeadLines processes your CSV files through the following workflow:
+        </p>
+        <ol className="list-decimal pl-5 space-y-1 text-blue-800">
+          <li>When you submit a CSV file, the status is set to "Processing"</li>
+          <li>Your file is processed through our AI-powered system</li>
+          <li>When processing is complete, the status is updated to "Done"</li>
+          <li>If an error occurs, the status is updated to "Error"</li>
+          <li>You can download the processed file once the status is "Done"</li>
+          <li>You can edit the submission name at any time for better organization</li>
+        </ol>
+      </div>
+    </div>
   );
 };
 

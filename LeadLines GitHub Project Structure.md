@@ -39,7 +39,7 @@ LeadLines-Mark-1/
 │   │   │   └── Profile.jsx     # User profile management
 │   │   ├── submissions/        # Submission management
 │   │   │   ├── MappingModal.jsx # Field mapping modal
-│   │   │   └── SubmissionsPage.jsx # Submissions listing page with enhanced UI rendering
+│   │   │   └── SubmissionsPage.jsx # Submissions listing page with original UI and enhanced display logic
 │   │   └── upload/             # CSV Upload section
 │   │       └── UploadPage.jsx  # CSV Upload page component
 │   ├── config/                 # Configuration files
@@ -135,7 +135,7 @@ The application integrates with several external services:
 The UI is organized into several key areas:
 - `src/components/dashboard/Dashboard.jsx` - Main dashboard view
 - `src/components/profile/Profile.jsx` - User profile management
-- `src/components/submissions/SubmissionsPage.jsx` - Workflow submissions management with enhanced UI rendering
+- `src/components/submissions/SubmissionsPage.jsx` - Workflow submissions management with original UI and enhanced display logic
 - `src/components/agent/AgentPage.jsx` - Full-featured AI Agent chat interface with thread and file management
 - `src/components/upload/UploadPage.jsx` - CSV file upload interface
 
@@ -150,7 +150,7 @@ The application includes several form components for different purposes:
 
 - `src/components/upload/UploadPage.jsx` - Container for CSV upload functionality
 - `src/components/forms/csvUpload/CSVUploadForm.jsx` - Form for uploading CSV files
-- `src/components/submissions/SubmissionsPage.jsx` - Page for viewing and managing submissions with enhanced UI rendering
+- `src/components/submissions/SubmissionsPage.jsx` - Page for viewing and managing submissions with original UI and enhanced display logic
 - `src/services/SubmissionsService.js` - Service for managing submissions with n8n workflow integration
 
 ## Routing Structure
@@ -168,13 +168,11 @@ The application uses React Router with the following main routes:
 
 ## Recent Updates
 
-- Enhanced SubmissionsPage.jsx to properly display all submissions regardless of file_path status
-- Added improved error handling and debugging for submission rendering
-- Fixed UI rendering for submissions with NULL/MISSING file paths
+- Reverted SubmissionsPage.jsx to original table-based UI while maintaining enhanced display logic
+- Fixed display logic to show submissions with NULL/MISSING file paths
 - Added detailed logging for submission data retrieval and display
 - Implemented permissive Supabase policies for Firebase authentication
-- Added detailed logging for submission retrieval and processing
-- Improved error handling to prevent UI crashes with incomplete data
+- Enhanced SubmissionsService.js to handle NULL file_path values for n8n workflow integration
 - Added Firebase authentication headers to Supabase client for seamless integration
 - Updated RLS policies to work with Firebase authenticated users
 - Fixed CSV Upload functionality to properly work with Firebase authentication
