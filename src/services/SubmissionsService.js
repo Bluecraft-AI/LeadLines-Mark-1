@@ -2,9 +2,40 @@ import { auth } from '../config/firebase';
 import { supabase } from '../config/supabase';
 
 /**
- * Service for managing CSV submissions with direct Firebase UID
+ * Service for managing CSV submissions with Firebase authentication
  */
 class SubmissionsService {
+  /**
+   * Get all submissions for the current user
+   * @returns {Promise<Array>} Array of submissions
+   */
+  async getSubmissions() {
+    try {
+      // Ensure user is authenticated
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      // Get submissions directly from Supabase
+      const { data, error } = await supabase
+        .from('csv_submissions')
+        .select('*')
+        .eq('user_id', user.uid)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error getting submissions:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error getting submissions:', error);
+      throw error;
+    }
+  }
+
   /**
    * Create a new submission
    * @param {Object} submissionData - The submission data
@@ -12,16 +43,15 @@ class SubmissionsService {
    */
   async createSubmission(submissionData) {
     try {
-      console.log('Creating submission with user_id:', auth.currentUser.uid);
-      
       // Ensure user is authenticated
       const user = auth.currentUser;
       if (!user) {
         throw new Error('User not authenticated');
       }
       
-      // Insert submission directly to Supabase
-      // This works with the anonymous insert policy we've added
+      console.log('Creating submission with user_id:', user.uid);
+      
+      // Create a new submission with Firebase user ID
       const { data, error } = await supabase
         .from('csv_submissions')
         .insert([
@@ -45,38 +75,6 @@ class SubmissionsService {
       return data[0];
     } catch (error) {
       console.error('Error creating submission:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get all submissions for the current user
-   * @returns {Promise<Array>} Array of submissions
-   */
-  async getSubmissions() {
-    try {
-      // Ensure user is authenticated
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      
-      // Get submissions directly from Supabase
-      // This works with the RLS policy that allows users to view their own submissions
-      const { data, error } = await supabase
-        .from('csv_submissions')
-        .select('*')
-        .eq('user_id', user.uid)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error getting submissions:', error);
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Error getting submissions:', error);
       throw error;
     }
   }
@@ -305,13 +303,25 @@ class SubmissionsService {
     }
   }
 
-  // Upload a CSV file to Supabase Storage
+  /**
+   * Upload a CSV file to Supabase Storage
+   * @param {File} file - The file to upload
+   * @param {string} userId - User ID (optional, defaults to current user)
+   * @returns {Promise<string>} The file path
+   */
   async uploadCSVFile(file, userId) {
     try {
-      const filePath = `${userId}/${Date.now()}_${file.name}`;
+      // Ensure user is authenticated
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
       
-      // Upload directly to Supabase Storage
-      // This works with the anonymous upload policy we've added
+      // Use the provided userId or default to the current user's ID
+      const actualUserId = userId || user.uid;
+      const filePath = `${actualUserId}/${Date.now()}_${file.name}`;
+      
+      // Upload file to Supabase Storage
       const { data, error } = await supabase.storage
         .from('csv-files')
         .upload(filePath, file);
@@ -329,9 +339,21 @@ class SubmissionsService {
     }
   }
 
-  // Update a submission's status
+  /**
+   * Update a submission's status
+   * @param {string} submissionId - The submission ID
+   * @param {string} status - The new status
+   * @param {string} processedFilePath - Optional processed file path
+   * @returns {Promise<Object>} The updated submission
+   */
   async updateSubmissionStatus(submissionId, status, processedFilePath = null) {
     try {
+      // Ensure user is authenticated
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .update({
@@ -339,7 +361,7 @@ class SubmissionsService {
           processed_file_path: processedFilePath
         })
         .eq('id', submissionId)
-        .eq('user_id', auth.currentUser.uid)
+        .eq('user_id', user.uid)
         .select();
       
       if (error) {
@@ -354,16 +376,27 @@ class SubmissionsService {
     }
   }
 
-  // Update a submission's name
+  /**
+   * Update a submission's name
+   * @param {string} submissionId - The submission ID
+   * @param {string} customName - The new custom name
+   * @returns {Promise<Object>} The updated submission
+   */
   async updateSubmissionName(submissionId, customName) {
     try {
+      // Ensure user is authenticated
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .update({
           custom_name: customName
         })
         .eq('id', submissionId)
-        .eq('user_id', auth.currentUser.uid)
+        .eq('user_id', user.uid)
         .select();
       
       if (error) {
@@ -378,13 +411,23 @@ class SubmissionsService {
     }
   }
 
-  // Search submissions by name
+  /**
+   * Search submissions by name
+   * @param {string} searchTerm - The search term
+   * @returns {Promise<Array>} Array of matching submissions
+   */
   async searchSubmissionsByName(searchTerm) {
     try {
+      // Ensure user is authenticated
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('csv_submissions')
         .select('*')
-        .eq('user_id', auth.currentUser.uid)
+        .eq('user_id', user.uid)
         .ilike('custom_name', `%${searchTerm}%`)
         .order('created_at', { ascending: false });
       
@@ -399,8 +442,6 @@ class SubmissionsService {
       throw error;
     }
   }
-
-  // Legacy methods for backward compatibility
 }
 
 // Export a singleton instance

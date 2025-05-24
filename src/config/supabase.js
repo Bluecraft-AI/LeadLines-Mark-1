@@ -2,6 +2,7 @@
 // This file should be placed in the src/config directory
 
 import { createClient } from '@supabase/supabase-js';
+import { auth } from './firebase';
 
 // Supabase configuration
 const supabaseUrl = 'https://jaicupcmdaypybsbbacz.supabase.co';
@@ -10,7 +11,16 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Initialize Supabase client with error handling
 let supabase;
 try {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        // Add a custom header that will be used by our updated RLS policies
+        // This allows Firebase authenticated users to bypass RLS checks
+        'x-firebase-auth': 'true',
+      },
+    },
+  });
+  
   console.log('Supabase client initialized successfully');
 } catch (error) {
   console.error('Error initializing Supabase client:', error);
@@ -40,8 +50,10 @@ try {
     }),
     storage: {
       from: () => ({
-        upload: () => Promise.resolve({ data: null, error: null }),
-        download: () => Promise.resolve({ data: null, error: null })
+        upload: () => ({
+          data: null,
+          error: null
+        })
       })
     }
   };

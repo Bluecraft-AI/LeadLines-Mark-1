@@ -2,42 +2,9 @@ import { supabase } from '../config/supabase';
 import { auth } from '../config/firebase';
 
 /**
- * Service for managing OpenAI Assistants through Firebase Functions
+ * Service for managing OpenAI Assistants with Firebase authentication
  */
 class AssistantService {
-  /**
-   * Get the Supabase UUID for the current Firebase user
-   * @returns {Promise<string>} The Supabase UUID
-   */
-  async getSupabaseUuid() {
-    try {
-      // Ensure user is authenticated
-      if (!auth.currentUser) {
-        throw new Error('User not authenticated');
-      }
-      
-      const { data, error } = await supabase
-        .rpc('get_or_create_supabase_uuid', {
-          p_firebase_uid: auth.currentUser.uid,
-          p_email: auth.currentUser.email
-        });
-      
-      if (error) {
-        console.error('RPC error:', error);
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error('Failed to get or create Supabase UUID');
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Error getting Supabase UUID:', error);
-      throw error;
-    }
-  }
-
   /**
    * Get the user's assistant
    * @returns {Promise<Object>} The assistant object
@@ -50,29 +17,11 @@ class AssistantService {
         throw new Error('User not authenticated');
       }
       
-      // First get the Supabase UUID from auth_mapping
-      const { data: mappingData, error: mappingError } = await supabase
-        .from('auth_mapping')
-        .select('supabase_uuid')
-        .eq('firebase_uid', user.uid)
-        .single();
-      
-      if (mappingError) {
-        console.error('Error getting user mapping:', mappingError);
-        throw mappingError;
-      }
-      
-      if (!mappingData || !mappingData.supabase_uuid) {
-        throw new Error('User mapping not found');
-      }
-      
-      const supabaseUuid = mappingData.supabase_uuid;
-      
-      // Now get the assistant using the Supabase UUID
+      // Get the assistant using Firebase UID directly
       const { data, error } = await supabase
         .from('user_assistants')
         .select('*')
-        .eq('user_id', supabaseUuid)
+        .eq('user_id', user.uid)
         .single();
       
       if (error) {
@@ -93,10 +42,15 @@ class AssistantService {
    */
   async createThread() {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('assistant_threads')
         .insert([
-          { user_id: auth.currentUser.uid }
+          { user_id: user.uid }
         ])
         .select();
       
@@ -118,12 +72,15 @@ class AssistantService {
    */
   async getThreads() {
     try {
-      const supabaseUuid = await this.getSupabaseUuid();
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
       
       const { data, error } = await supabase
         .from('assistant_threads')
         .select('*')
-        .eq('user_id', supabaseUuid)
+        .eq('user_id', user.uid)
         .order('last_message_at', { ascending: false });
       
       if (error) throw error;
@@ -158,11 +115,10 @@ class AssistantService {
       const data = await response.json();
       
       // Update last_message_at in Supabase
-      const supabaseUuid = await this.getSupabaseUuid();
       await supabase
         .from('assistant_threads')
         .update({ last_message_at: new Date().toISOString() })
-        .eq('user_id', supabaseUuid)
+        .eq('user_id', auth.currentUser.uid)
         .eq('thread_id', threadId);
       
       return data;
@@ -281,11 +237,10 @@ class AssistantService {
       const data = await response.json();
       
       // Store file information in Supabase
-      const supabaseUuid = await this.getSupabaseUuid();
       await supabase
         .from('assistant_files')
         .insert({
-          user_id: supabaseUuid,
+          user_id: auth.currentUser.uid,
           file_id: data.fileId,
           filename: file.name,
           purpose: 'assistants',
@@ -361,12 +316,15 @@ class AssistantService {
    */
   async getFiles() {
     try {
-      const supabaseUuid = await this.getSupabaseUuid();
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
       
       const { data, error } = await supabase
         .from('assistant_files')
         .select('*')
-        .eq('user_id', supabaseUuid)
+        .eq('user_id', user.uid)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -400,11 +358,10 @@ class AssistantService {
       }
       
       // Delete file from Supabase
-      const supabaseUuid = await this.getSupabaseUuid();
       await supabase
         .from('assistant_files')
         .delete()
-        .eq('user_id', supabaseUuid)
+        .eq('user_id', auth.currentUser.uid)
         .eq('file_id', fileId);
       
       return await response.json();
@@ -468,11 +425,10 @@ class AssistantService {
       }
       
       // Delete thread from Supabase
-      const supabaseUuid = await this.getSupabaseUuid();
       await supabase
         .from('assistant_threads')
         .delete()
-        .eq('user_id', supabaseUuid)
+        .eq('user_id', auth.currentUser.uid)
         .eq('thread_id', threadId);
       
       return await response.json();
@@ -528,13 +484,21 @@ class AssistantService {
     }
   }
 
-  // Get user threads
+  /**
+   * Get user threads
+   * @returns {Promise<Array>} Array of threads
+   */
   async getUserThreads() {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
       const { data, error } = await supabase
         .from('assistant_threads')
         .select('*')
-        .eq('user_id', auth.currentUser.uid)
+        .eq('user_id', user.uid)
         .order('last_accessed_at', { ascending: false });
       
       if (error) {
@@ -549,10 +513,20 @@ class AssistantService {
     }
   }
 
-  // Upload a file for the assistant
+  /**
+   * Upload a file for the assistant
+   * @param {File} file - The file to upload
+   * @param {string} threadId - Optional thread ID
+   * @returns {Promise<Object>} The uploaded file data
+   */
   async uploadAssistantFile(file, threadId = null) {
     try {
-      const filePath = `${auth.currentUser.uid}/${Date.now()}_${file.name}`;
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const filePath = `${user.uid}/${Date.now()}_${file.name}`;
       
       // Upload directly to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -569,7 +543,7 @@ class AssistantService {
         .from('assistant_files')
         .insert([
           {
-            user_id: auth.currentUser.uid,
+            user_id: user.uid,
             thread_id: threadId,
             filename: file.name,
             file_size: file.size,
