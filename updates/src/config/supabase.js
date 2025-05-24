@@ -1,6 +1,3 @@
-// Fix for the blank screen issue
-// This file should be placed in the src/config directory
-
 import { createClient } from '@supabase/supabase-js';
 import { auth } from './firebase';
 
@@ -82,4 +79,4 @@ try {
   };
 }
 
-export { supabase }; 
+export { supabase };

@@ -25,12 +25,11 @@ class SubmissionsService {
         .insert({
           user_id: authService.getCurrentUserId(),
           user_email: authService.getCurrentUserEmail(),
-          original_filename: submissionData.originalFilename || submissionData.original_filename,
-          custom_name: submissionData.customName || submissionData.custom_name,
+          original_filename: submissionData.originalFilename,
+          custom_name: submissionData.customName,
           status: 'processing',
           notes: submissionData.notes,
-          file_path: submissionData.filePath,
-          email_count: submissionData.email_count || submissionData.emailCount
+          file_path: submissionData.filePath
         })
         .select()
         .single();
@@ -68,7 +67,7 @@ class SubmissionsService {
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Supabase error getting submissions:', error);
+        console.error('Supabase error:', error);
         throw error;
       }
       
@@ -102,7 +101,7 @@ class SubmissionsService {
         .single();
       
       if (error) {
-        console.error('Supabase error getting submission:', error);
+        console.error('Supabase error:', error);
         throw error;
       }
       
@@ -138,7 +137,7 @@ class SubmissionsService {
         .single();
       
       if (error) {
-        console.error('Supabase error updating submission:', error);
+        console.error('Supabase error:', error);
         throw error;
       }
       
@@ -171,7 +170,7 @@ class SubmissionsService {
         .eq('user_id', authService.getCurrentUserId());
       
       if (error) {
-        console.error('Supabase error deleting submission:', error);
+        console.error('Supabase error:', error);
         throw error;
       }
     } catch (error) {
@@ -183,11 +182,9 @@ class SubmissionsService {
   /**
    * Upload a CSV file
    * @param {File} file - The file to upload
-   * @param {string} userId - User ID (optional, defaults to current user)
-   * @param {string} submissionId - Submission ID (optional)
    * @returns {Promise<string>} The file path
    */
-  async uploadFile(file, userId = null, submissionId = null) {
+  async uploadFile(file) {
     try {
       // Ensure user is authenticated
       if (!authService.isUserAuthenticated()) {
@@ -197,26 +194,14 @@ class SubmissionsService {
       // Ensure Supabase auth is synchronized before making the request
       await authService.refreshAuth();
       
-      // Use provided userId or default to current user
-      const uid = userId || authService.getCurrentUserId();
+      const filePath = `${authService.getCurrentUserId()}/${Date.now()}_${file.name}`;
       
-      // Create file path
-      let filePath;
-      if (submissionId) {
-        filePath = `${uid}/${submissionId}/${file.name}`;
-      } else {
-        filePath = `${uid}/${Date.now()}_${file.name}`;
-      }
-      
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('csv-files')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        .upload(filePath, file);
       
       if (error) {
-        console.error('Storage error uploading file:', error);
+        console.error('Storage error:', error);
         throw error;
       }
       
@@ -247,44 +232,13 @@ class SubmissionsService {
         .download(filePath);
       
       if (error) {
-        console.error('Storage error downloading file:', error);
+        console.error('Storage error:', error);
         throw error;
       }
       
       return data;
     } catch (error) {
       console.error('Error downloading file:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get a download URL for a file
-   * @param {string} filePath - The file path
-   * @returns {Promise<string>} The download URL
-   */
-  async getFileDownloadUrl(filePath) {
-    try {
-      // Ensure user is authenticated
-      if (!authService.isUserAuthenticated()) {
-        throw new Error('User not authenticated');
-      }
-      
-      // Ensure Supabase auth is synchronized before making the request
-      await authService.refreshAuth();
-      
-      const { data, error } = await supabase.storage
-        .from('csv-files')
-        .createSignedUrl(filePath, 3600); // URL valid for 1 hour
-      
-      if (error) {
-        console.error('Storage error creating signed URL:', error);
-        throw error;
-      }
-      
-      return data.signedUrl;
-    } catch (error) {
-      console.error('Error getting file download URL:', error);
       throw error;
     }
   }
@@ -333,5 +287,4 @@ class SubmissionsService {
   }
 }
 
-// Export a singleton instance
 export default new SubmissionsService();
