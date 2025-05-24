@@ -14,6 +14,7 @@ class SubmissionsService {
       // Ensure user is authenticated
       const user = auth.currentUser;
       if (!user) {
+        console.error('User not authenticated when trying to get submissions');
         throw new Error('User not authenticated');
       }
       
@@ -31,11 +32,28 @@ class SubmissionsService {
         throw error;
       }
       
-      console.log('Retrieved submissions:', data);
-      return data;
+      // Log each submission with detailed field information
+      if (data && data.length > 0) {
+        console.log(`Retrieved ${data.length} submissions`);
+        data.forEach((submission, index) => {
+          console.log(`Submission ${index + 1}:`, {
+            id: submission.id,
+            user_id: submission.user_id,
+            original_filename: submission.original_filename,
+            custom_name: submission.custom_name,
+            file_path: submission.file_path || 'NULL/MISSING',
+            status: submission.status,
+            created_at: submission.created_at
+          });
+        });
+      } else {
+        console.log('No submissions found for this user');
+      }
+      
+      return data || [];
     } catch (error) {
       console.error('Error getting submissions:', error);
-      throw error;
+      return []; // Return empty array instead of throwing to prevent UI crashes
     }
   }
 
@@ -49,10 +67,15 @@ class SubmissionsService {
       // Ensure user is authenticated
       const user = auth.currentUser;
       if (!user) {
+        console.error('User not authenticated when trying to create submission');
         throw new Error('User not authenticated');
       }
       
       console.log('Creating submission with user_id:', user.uid);
+      console.log('Submission data:', submissionData);
+      
+      // Ensure file_path is not null/undefined
+      const file_path = submissionData.file_path || '';
       
       // Create a new submission with Firebase user ID
       const { data, error } = await supabase
@@ -62,8 +85,8 @@ class SubmissionsService {
             user_id: user.uid,
             user_email: user.email,
             original_filename: submissionData.original_filename,
-            custom_name: submissionData.custom_name || null,
-            file_path: submissionData.file_path,
+            custom_name: submissionData.custom_name || submissionData.original_filename,
+            file_path: file_path,
             notes: submissionData.notes || null,
             status: 'processing'
           }
@@ -75,6 +98,7 @@ class SubmissionsService {
         throw error;
       }
       
+      console.log('Successfully created submission:', data[0]);
       return data[0];
     } catch (error) {
       console.error('Error creating submission:', error);
@@ -320,6 +344,7 @@ class SubmissionsService {
       // Ensure user is authenticated
       const user = auth.currentUser;
       if (!user) {
+        console.error('User not authenticated when trying to upload CSV file');
         throw new Error('User not authenticated');
       }
       
@@ -363,15 +388,22 @@ class SubmissionsService {
       // Ensure user is authenticated
       const user = auth.currentUser;
       if (!user) {
+        console.error('User not authenticated when trying to update submission status');
         throw new Error('User not authenticated');
+      }
+      
+      const updateData = {
+        status: status
+      };
+      
+      // Only include processed_file_path if it's provided
+      if (processedFilePath) {
+        updateData.processed_file_path = processedFilePath;
       }
       
       const { data, error } = await supabase
         .from('csv_submissions')
-        .update({
-          status: status,
-          processed_file_path: processedFilePath
-        })
+        .update(updateData)
         .eq('id', submissionId)
         .eq('user_id', user.uid)
         .select();
@@ -381,6 +413,7 @@ class SubmissionsService {
         throw error;
       }
       
+      console.log('Successfully updated submission status:', data[0]);
       return data[0];
     } catch (error) {
       console.error('Error updating submission status:', error);
@@ -399,6 +432,7 @@ class SubmissionsService {
       // Ensure user is authenticated
       const user = auth.currentUser;
       if (!user) {
+        console.error('User not authenticated when trying to update submission name');
         throw new Error('User not authenticated');
       }
       
@@ -416,6 +450,7 @@ class SubmissionsService {
         throw error;
       }
       
+      console.log('Successfully updated submission name:', data[0]);
       return data[0];
     } catch (error) {
       console.error('Error updating submission name:', error);
@@ -433,6 +468,7 @@ class SubmissionsService {
       // Ensure user is authenticated
       const user = auth.currentUser;
       if (!user) {
+        console.error('User not authenticated when trying to search submissions');
         throw new Error('User not authenticated');
       }
       
@@ -450,11 +486,11 @@ class SubmissionsService {
         throw error;
       }
       
-      console.log('Search by name results:', data);
+      console.log(`Search found ${data.length} results for term: ${searchTerm}`);
       return data;
     } catch (error) {
       console.error('Error searching submissions:', error);
-      throw error;
+      return []; // Return empty array instead of throwing to prevent UI crashes
     }
   }
 }

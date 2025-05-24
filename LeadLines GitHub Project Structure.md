@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the file structure of the LeadLines-Mark-1 GitHub repository. The structure is organized to support a React application with Firebase authentication, Firebase Functions for secure API integration, Supabase database integration, and various service integrations including OpenAI Assistants API.
+This document outlines the file structure of the LeadLines-Mark-1 GitHub repository. The structure is organized to support a React application with Firebase authentication, Supabase database integration, and various service integrations including Airtable and Instantly.ai.
 
 ## Directory Structure
 
@@ -10,17 +10,6 @@ This document outlines the file structure of the LeadLines-Mark-1 GitHub reposit
 LeadLines-Mark-1/
 ├── .github/                    # GitHub configuration
 │   └── workflows/              # GitHub Actions workflows
-├── docs/                       # Documentation
-│   ├── FIREBASE_FUNCTIONS_IMPLEMENTATION.md # Documentation for Firebase Functions implementation
-│   ├── FIREBASE_FUNCTIONS_SETUP.md # Setup guide for Firebase Functions
-│   └── OpenAI_API_Key_Integration.md # Guide for integrating OpenAI API keys
-├── .firebaserc                 # Firebase project configuration
-├── firebase.json               # Firebase deployment configuration
-├── functions/                  # Firebase Cloud Functions
-│   ├── index.js                # Main Firebase Functions implementation
-│   ├── package.json            # Functions dependencies
-│   ├── deploy-all.sh           # Deployment script for all functions
-│   └── README.md               # Functions documentation
 ├── public/                     # Static assets
 │   └── assets/
 │       └── icons/              # Application icons
@@ -50,30 +39,30 @@ LeadLines-Mark-1/
 │   │   │   └── Profile.jsx     # User profile management
 │   │   ├── submissions/        # Submission management
 │   │   │   ├── MappingModal.jsx # Field mapping modal
-│   │   │   └── SubmissionsPage.jsx # Submissions listing page
+│   │   │   └── SubmissionsPage.jsx # Submissions listing page with n8n workflow integration
 │   │   └── upload/             # CSV Upload section
 │   │       └── UploadPage.jsx  # CSV Upload page component
 │   ├── config/                 # Configuration files
-│   │   ├── credentials.js      # Centralized credentials management
+│   │   ├── airtable.js         # Airtable API configuration
 │   │   ├── firebase.js         # Firebase configuration
-│   │   └── supabase.js         # Supabase configuration
+│   │   └── supabase.js         # Supabase configuration with Firebase auth headers
 │   ├── contexts/               # React contexts
 │   │   └── AuthContext.jsx     # Authentication context provider
 │   ├── db/                     # Database scripts and schemas
-│   │   ├── supabase_ai_agent_schema.sql # Schema for AI Agent tables and RLS policies
-│   │   └── supabase_schema.sql # Main Supabase database schema
+│   │   ├── supabase_schema.sql # SQL schema for Supabase database
+│   │   ├── supabase_ai_agent_schema.sql # SQL schema for AI Agent tables and RLS policies
+│   │   └── firebase_auth_rls_update.sql # SQL for Firebase auth compatible RLS policies
 │   ├── services/               # Service integrations
 │   │   ├── AirtableService.js  # Airtable API service
-│   │   ├── AssistantService.js # OpenAI Assistants API integration
+│   │   ├── AssistantService.js # Manages OpenAI Assistant interactions with user-specific assistants
 │   │   ├── InstantlyService.js # Instantly.ai integration
-│   │   ├── OpenAIService.js    # OpenAI API client initialization
-│   │   ├── SubmissionsService.js # Submissions management service
+│   │   ├── OpenAIService.js    # Initializes the OpenAI API client for Assistants API
+│   │   ├── SubmissionsService.js # Manages CSV submissions with n8n workflow integration support
 │   │   ├── UserService.js      # User management service
 │   │   └── WorkflowService.js  # Workflow management service
 │   ├── styles/                 # CSS and styling files
 │   ├── App.jsx                 # Main application component with routes
 │   └── main.jsx                # Application entry point
-└── README.md                   # Project overview and setup instructions
 ```
 
 ## Key Components
@@ -124,28 +113,11 @@ The CSV upload functionality is implemented through:
 ### Database Integration
 
 Database integration is primarily handled through Supabase with configuration in:
-- `src/config/supabase.js` - Supabase client configuration
+- `src/config/supabase.js` - Supabase client configuration with Firebase auth headers
 - `src/db/` - Database schemas and migration scripts
 - `src/db/supabase_schema.sql` - SQL schema for Supabase database
 - `src/db/supabase_ai_agent_schema.sql` - SQL schema for AI Agent tables and RLS policies
-
-### AI Agent Integration
-
-The AI Agent functionality is implemented through:
-- `src/components/agent/AgentPage.jsx` - Full-featured AI Agent chat interface
-- `src/services/AssistantService.js` - Service for interacting with OpenAI Assistants API
-- `src/services/OpenAIService.js` - OpenAI API client initialization
-- `functions/index.js` - Firebase Functions for secure OpenAI API integration
-- `src/db/supabase_ai_agent_schema.sql` - Database schema for AI Agent data
-
-### Firebase Functions Backend
-
-The application uses Firebase Functions for secure backend operations:
-- `functions/index.js` - Main implementation of all Firebase Functions
-- `functions/deploy-all.sh` - Script for deploying all functions
-- `docs/FIREBASE_FUNCTIONS_IMPLEMENTATION.md` - Documentation for the Firebase Functions implementation
-- `docs/FIREBASE_FUNCTIONS_SETUP.md` - Guide for setting up Firebase Functions
-- `docs/OpenAI_API_Key_Integration.md` - Guide for securely integrating OpenAI API keys
+- `src/db/firebase_auth_rls_update.sql` - SQL for Firebase auth compatible RLS policies
 
 ### Service Integrations
 
@@ -154,17 +126,32 @@ The application integrates with several external services:
 - `src/services/InstantlyService.js` - Manages email campaign integration
 - `src/services/UserService.js` - Manages user profile data
 - `src/services/WorkflowService.js` - Handles workflow submission tracking
-- `src/services/SubmissionsService.js` - Manages CSV submissions with file path normalization for improved download functionality
+- `src/services/SubmissionsService.js` - Manages CSV submissions with n8n workflow integration support
 - `src/services/AssistantService.js` - Manages OpenAI Assistant interactions with user-specific assistants
+- `src/services/OpenAIService.js` - Initializes the OpenAI API client for communication with the Assistants API
 
 ### User Interface
 
 The UI is organized into several key areas:
 - `src/components/dashboard/Dashboard.jsx` - Main dashboard view
 - `src/components/profile/Profile.jsx` - User profile management
-- `src/components/submissions/SubmissionsPage.jsx` - Workflow submissions management
+- `src/components/submissions/SubmissionsPage.jsx` - Workflow submissions management with n8n integration
 - `src/components/agent/AgentPage.jsx` - Full-featured AI Agent chat interface with thread and file management
 - `src/components/upload/UploadPage.jsx` - CSV file upload interface
+
+### Forms
+
+The application includes several form components for different purposes:
+- `src/components/forms/csvUpload/CSVUploadForm.jsx` - CSV file upload for email sequence generation
+- `src/components/forms/emailAccount/EmailSubmissionForm.jsx` - Email account submission
+- `src/components/forms/jobPosting/JobPostingForm.jsx` - Job posting campaign creation
+
+### CSV Upload and Processing
+
+- `src/components/upload/UploadPage.jsx` - Container for CSV upload functionality
+- `src/components/forms/csvUpload/CSVUploadForm.jsx` - Form for uploading CSV files
+- `src/components/submissions/SubmissionsPage.jsx` - Page for viewing and managing submissions
+- `src/services/SubmissionsService.js` - Service for managing submissions with n8n workflow integration
 
 ## Routing Structure
 
@@ -181,12 +168,25 @@ The application uses React Router with the following main routes:
 
 ## Recent Updates
 
-- Reorganized project structure for better organization and maintainability
-- Created dedicated folders for documentation
-- Implemented secure Firebase Functions backend for OpenAI API integration
-- Centralized credentials management for enhanced security
-- Removed redundant deployment scripts and system artifacts
-- Added comprehensive documentation for Firebase Functions setup and implementation
-- Improved OpenAI API key integration with server-side security
-- Organized AI Agent implementation files into appropriate directories
-- Fixed Firebase Functions V2 configuration with proper secrets handling
+- Enhanced SubmissionsService.js to handle NULL file_path values for n8n workflow integration
+- Added detailed logging for submission retrieval and processing
+- Improved error handling to prevent UI crashes with incomplete data
+- Added Firebase authentication headers to Supabase client for seamless integration
+- Updated RLS policies to work with Firebase authenticated users
+- Fixed CSV Upload functionality to properly work with Firebase authentication
+- Fixed Submissions section to correctly display user data
+- Ensured AI Agent section properly shows assistants associated with user accounts
+- Added OpenAI API integration for AI Agent functionality
+- Implemented real-time AI chat with the OpenAI Assistants API
+- Added AI Agent implementation with user-specific assistants and chat interface
+- Implemented thread management for AI conversations
+- Added file upload functionality for AI Assistants
+- Created database schema with Row Level Security for AI Agent data
+- Added CSV Upload to Submissions workflow with Supabase integration
+- Implemented submission tracking, status updates, and file storage
+- Added search functionality to Submissions page
+- Added submission name editing capability
+- Implemented download functionality for processed files with path normalization
+- Moved sidebar from right to left side
+- Updated UI layout and navigation
+- Fixed scroll containment within panels
