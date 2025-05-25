@@ -33,11 +33,25 @@ const SubmissionsPage = () => {
       
       console.log('Fetching submissions for user:', currentUser.uid);
       
-      // Get submissions directly from service
-      const data = await SubmissionsService.getSubmissions();
+      let data = [];
+      
+      // Handle search term if present
+      if (searchTerm && searchTerm.trim() !== '') {
+        console.log('Searching with term:', searchTerm);
+        data = await SubmissionsService.searchSubmissions(searchTerm);
+      } else {
+        // Get all submissions
+        data = await SubmissionsService.getSubmissions();
+      }
+      
+      // Apply filter if not 'all'
+      if (selectedFilter !== 'all') {
+        console.log('Filtering by status:', selectedFilter);
+        data = data.filter(submission => submission.status === selectedFilter);
+      }
       
       // Log all submissions for debugging
-      console.log(`Retrieved ${data.length} submissions`);
+      console.log(`Retrieved ${data.length} submissions after search/filter`);
       data.forEach((submission, index) => {
         console.log(`Submission ${index + 1}:`, submission);
       });
@@ -73,7 +87,7 @@ const SubmissionsPage = () => {
     );
   };
 
-  // Effect to fetch submissions on component mount and filter/search change
+  // Effect to fetch submissions on component mount and filter change
   useEffect(() => {
     if (currentUser) {
       fetchSubmissions();
