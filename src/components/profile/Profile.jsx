@@ -120,6 +120,7 @@ const Profile = () => {
         .from('user_settings')
         .insert({
           firebase_uid: currentUser.uid,
+          phone: '(555) 123-4567',
           notifications: {
             email: true,
             browser: false,
@@ -240,6 +241,7 @@ const Profile = () => {
       const { error: settingsError } = await supabase
         .from('user_settings')
         .update({
+          phone: userData.phone,
           notifications: userData.notifications,
           updated_at: new Date()
         })
@@ -602,7 +604,7 @@ const Profile = () => {
                   <button
                     type="button"
                     onClick={handleSaveApiKey}
-                    className="px-4 py-2 bg-primary text-white rounded-r-md hover:bg-primary-dark transition-colors"
+                    className="btn-secondary rounded-l-none rounded-r-md"
                   >
                     Save
                   </button>
@@ -622,7 +624,7 @@ const Profile = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditingApiKey(true)}
-                      className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
+                      className="btn-secondary"
                     >
                       Update API Key
                     </button>
