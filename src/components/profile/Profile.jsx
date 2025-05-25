@@ -593,29 +593,29 @@ const Profile = () => {
             {isEditingApiKey ? (
               <div className="mt-4">
                 <label className="block text-text-dark mb-1">API Key</label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    value={userData.integrations.instantly.apiKey}
-                    onChange={handleApiKeyChange}
-                    placeholder="Enter your Instantly.ai API key"
-                    className="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                  />
+                <input
+                  type="text"
+                  value={userData.integrations.instantly.apiKey}
+                  onChange={handleApiKeyChange}
+                  placeholder="Enter your Instantly.ai API key"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary mb-4"
+                />
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingApiKey(false)}
+                    className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
                   <button
                     type="button"
                     onClick={handleSaveApiKey}
-                    className="btn-secondary rounded-l-none rounded-r-md"
+                    className="btn-primary"
                   >
                     Save
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingApiKey(false)}
-                  className="mt-2 text-sm text-gray-500 hover:text-gray-700"
-                >
-                  Cancel
-                </button>
               </div>
             ) : (
               <div className="mt-4">
