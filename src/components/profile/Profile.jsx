@@ -638,7 +638,7 @@ const Profile = () => {
                   <button
                     type="button"
                     onClick={() => setIsEditingApiKey(true)}
-                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                    className="btn-secondary"
                   >
                     Connect
                   </button>
@@ -725,7 +725,7 @@ const Profile = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                    className="btn-primary"
                   >
                     Update Password
                   </button>
@@ -735,7 +735,7 @@ const Profile = () => {
               <button
                 type="button"
                 onClick={() => setIsChangingPassword(true)}
-                className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
+                className="btn-secondary"
               >
                 Change Password
               </button>
