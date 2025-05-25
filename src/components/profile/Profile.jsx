@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../config/supabase';
-import { Container, Row, Col, Form, Button, Card, Alert } from 'react-bootstrap';
 
 const Profile = () => {
   const { currentUser } = useAuth();
@@ -185,76 +184,94 @@ const Profile = () => {
   };
 
   return (
-    <Container className="mt-4">
-      <Row className="justify-content-center">
-        <Col md={8}>
-          <Card>
-            <Card.Header as="h5">Profile Settings</Card.Header>
-            <Card.Body>
-              {error && <Alert variant="danger">{error}</Alert>}
-              {success && <Alert variant="success">{success}</Alert>}
+    <div className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card">
+            <div className="card-header">
+              <h5>Profile Settings</h5>
+            </div>
+            <div className="card-body">
+              {error && (
+                <div className="alert alert-danger" role="alert">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="alert alert-success" role="alert">
+                  {success}
+                </div>
+              )}
               
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label">Email</label>
+                  <input
                     type="email"
+                    className="form-control"
+                    id="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
                     disabled={true}
                   />
-                  <Form.Text className="text-muted">
+                  <small className="text-muted">
                     Email cannot be changed.
-                  </Form.Text>
-                </Form.Group>
+                  </small>
+                </div>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Full Name</Form.Label>
-                  <Form.Control
+                <div className="mb-3">
+                  <label htmlFor="fullName" className="form-label">Full Name</label>
+                  <input
                     type="text"
+                    className="form-control"
+                    id="fullName"
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
                     required
                   />
-                </Form.Group>
+                </div>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Company</Form.Label>
-                  <Form.Control
+                <div className="mb-3">
+                  <label htmlFor="company" className="form-label">Company</label>
+                  <input
                     type="text"
+                    className="form-control"
+                    id="company"
                     name="company"
                     value={formData.company}
                     onChange={handleChange}
                     required
                   />
-                </Form.Group>
+                </div>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Role</Form.Label>
-                  <Form.Control
+                <div className="mb-3">
+                  <label htmlFor="role" className="form-label">Role</label>
+                  <input
                     type="text"
+                    className="form-control"
+                    id="role"
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
                     required
                   />
-                </Form.Group>
+                </div>
 
-                <Button 
-                  variant="primary" 
+                <button 
+                  className="btn btn-primary" 
                   type="submit" 
                   disabled={loading}
                 >
                   {loading ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
