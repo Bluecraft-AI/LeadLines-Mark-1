@@ -51,26 +51,29 @@ export const AuthProvider = ({ children }) => {
         [user.uid]: initialSettings
       });
       
-      // Create user profile in Supabase
+      // Create user record in Supabase users table
       try {
-        await supabase.from('profiles').insert({
-          user_id: user.uid,
-          name: 'John Doe',
+        await supabase.from('users').insert({
+          firebase_uid: user.uid,
           email: user.email,
-          company: 'Acme Corporation',
-          role: 'Hiring Manager',
-          phone: '(555) 123-4567',
+          full_name: 'New User',
+          company: 'Your Company',
+          role: 'Your Role'
+        });
+        
+        // Create user settings record in Supabase user_settings table
+        await supabase.from('user_settings').insert({
+          firebase_uid: user.uid,
           notifications: {
             email: true,
             browser: false,
             mobile: true
           },
-          created_at: new Date(),
-          updated_at: new Date()
+          integrations: initialSettings.integrations
         });
       } catch (error) {
-        console.error("Error creating user profile in Supabase:", error);
-        // Continue even if Supabase profile creation fails
+        console.error("Error creating user records in Supabase:", error);
+        // Continue even if Supabase record creation fails
       }
       
       return user;
@@ -104,6 +107,43 @@ export const AuthProvider = ({ children }) => {
         };
         setUserSettings(initialSettings);
         localStorage.setItem(`user_settings_${user.uid}`, JSON.stringify(initialSettings));
+      }
+      
+      // Check if user exists in Supabase, create if not
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('firebase_uid', user.uid)
+          .single();
+        
+        if (error && error.code === 'PGRST116') {
+          // User doesn't exist in Supabase, create records
+          await supabase.from('users').insert({
+            firebase_uid: user.uid,
+            email: user.email,
+            full_name: 'New User',
+            company: 'Your Company',
+            role: 'Your Role'
+          });
+          
+          await supabase.from('user_settings').insert({
+            firebase_uid: user.uid,
+            notifications: {
+              email: true,
+              browser: false,
+              mobile: true
+            },
+            integrations: {
+              instantly: {
+                apiKey: '',
+                isConnected: false
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error checking/creating user in Supabase:", error);
       }
       
       return user;
@@ -160,6 +200,24 @@ export const AuthProvider = ({ children }) => {
     
     setUserSettings(updatedSettings);
     localStorage.setItem(`user_settings_${currentUser.uid}`, JSON.stringify(updatedSettings));
+    
+    // Also update Supabase user_settings
+    try {
+      supabase
+        .from('user_settings')
+        .update({
+          integrations: settings.integrations,
+          updated_at: new Date()
+        })
+        .eq('firebase_uid', currentUser.uid)
+        .then(({ error }) => {
+          if (error) {
+            console.error("Error updating user settings in Supabase:", error);
+          }
+        });
+    } catch (error) {
+      console.error("Error in updateUserSettings:", error);
+    }
   };
 
   // Get current user settings
@@ -180,6 +238,29 @@ export const AuthProvider = ({ children }) => {
         if (savedSettings) {
           setUserSettings(JSON.parse(savedSettings));
         }
+        
+        // Sync with Supabase user_settings
+        supabase
+          .from('user_settings')
+          .select('*')
+          .eq('firebase_uid', user.uid)
+          .single()
+          .then(({ data, error }) => {
+            if (!error && data) {
+              // Update local settings with Supabase data
+              const currentLocalSettings = userSettings[user.uid] || {};
+              const updatedSettings = {
+                ...userSettings,
+                [user.uid]: {
+                  ...currentLocalSettings,
+                  integrations: data.integrations || currentLocalSettings.integrations
+                }
+              };
+              
+              setUserSettings(updatedSettings);
+              localStorage.setItem(`user_settings_${user.uid}`, JSON.stringify(updatedSettings));
+            }
+          });
       }
     });
 

@@ -51,25 +51,52 @@ const Profile = () => {
       if (!currentUser) return;
       
       try {
-        const { data, error } = await supabase
-          .from('profiles')
+        // Query users table using Firebase UID
+        const { data: userData, error: userError } = await supabase
+          .from('users')
           .select('*')
-          .eq('user_id', currentUser.uid)
+          .eq('firebase_uid', currentUser.uid)
           .single();
         
-        if (error) {
-          console.error('Error fetching user profile:', error);
+        if (userError) {
+          console.error('Error fetching user data:', userError);
+          // If user doesn't exist, create a new record
+          if (userError.code === 'PGRST116') {
+            await createUserProfile();
+          }
           return;
         }
         
-        if (data) {
+        // Query user_settings table using Firebase UID
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('firebase_uid', currentUser.uid)
+          .single();
+        
+        if (settingsError && settingsError.code !== 'PGRST116') {
+          console.error('Error fetching user settings:', settingsError);
+        }
+        
+        // Update local state with fetched data
+        if (userData) {
           setUserData(prevData => ({
             ...prevData,
-            name: data.name || prevData.name,
-            company: data.company || prevData.company,
-            role: data.role || prevData.role,
-            phone: data.phone || prevData.phone,
-            notifications: data.notifications || prevData.notifications
+            name: userData.full_name || prevData.name,
+            company: userData.company || prevData.company,
+            role: userData.role || prevData.role,
+            email: userData.email || currentUser.email
+          }));
+        }
+        
+        if (settingsData) {
+          setUserData(prevData => ({
+            ...prevData,
+            phone: settingsData.phone || prevData.phone,
+            notifications: settingsData.notifications || prevData.notifications,
+            integrations: settingsData.integrations?.instantly ? 
+              { instantly: settingsData.integrations.instantly } : 
+              prevData.integrations
           }));
         }
       } catch (error) {
@@ -79,6 +106,44 @@ const Profile = () => {
     
     fetchUserProfile();
   }, [currentUser]);
+
+  // Create a new user profile if one doesn't exist
+  const createUserProfile = async () => {
+    if (!currentUser) return;
+    
+    try {
+      // Create record in users table
+      const { error: userError } = await supabase
+        .from('users')
+        .insert({
+          firebase_uid: currentUser.uid,
+          email: currentUser.email,
+          full_name: userData.name,
+          company: userData.company,
+          role: userData.role
+        });
+      
+      if (userError) {
+        console.error('Error creating user record:', userError);
+        return;
+      }
+      
+      // Create record in user_settings table
+      const { error: settingsError } = await supabase
+        .from('user_settings')
+        .insert({
+          firebase_uid: currentUser.uid,
+          notifications: userData.notifications,
+          integrations: userData.integrations
+        });
+      
+      if (settingsError) {
+        console.error('Error creating user settings record:', settingsError);
+      }
+    } catch (error) {
+      console.error('Error in createUserProfile:', error);
+    }
+  };
 
   // Update local state when user settings change
   useEffect(() => {
@@ -140,21 +205,32 @@ const Profile = () => {
     e.preventDefault();
     
     try {
-      // Save to Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: currentUser.uid,
-          name: userData.name,
+      // Update users table
+      const { error: userError } = await supabase
+        .from('users')
+        .update({
+          full_name: userData.name,
           company: userData.company,
           role: userData.role,
-          phone: userData.phone,
+        })
+        .eq('firebase_uid', currentUser.uid);
+      
+      if (userError) {
+        console.error('Error updating user data:', userError);
+        return;
+      }
+      
+      // Update user_settings table
+      const { error: settingsError } = await supabase
+        .from('user_settings')
+        .update({
           notifications: userData.notifications,
           updated_at: new Date()
-        });
+        })
+        .eq('firebase_uid', currentUser.uid);
       
-      if (error) {
-        console.error('Error saving profile data:', error);
+      if (settingsError) {
+        console.error('Error updating user settings:', settingsError);
         return;
       }
       
@@ -183,13 +259,18 @@ const Profile = () => {
     // Also save to Supabase
     try {
       const { error } = await supabase
-        .from('api_keys')
-        .upsert({
-          user_id: currentUser.uid,
-          service: 'instantly',
-          api_key: userData.integrations.instantly.apiKey,
+        .from('user_settings')
+        .update({
+          integrations: {
+            ...userData.integrations,
+            instantly: {
+              apiKey: userData.integrations.instantly.apiKey,
+              isConnected: true
+            }
+          },
           updated_at: new Date()
-        });
+        })
+        .eq('firebase_uid', currentUser.uid);
       
       if (error) {
         console.error('Error saving API key:', error);
@@ -220,13 +301,21 @@ const Profile = () => {
     // Also remove from Supabase
     try {
       const { error } = await supabase
-        .from('api_keys')
-        .delete()
-        .eq('user_id', currentUser.uid)
-        .eq('service', 'instantly');
+        .from('user_settings')
+        .update({
+          integrations: {
+            ...userData.integrations,
+            instantly: {
+              apiKey: '',
+              isConnected: false
+            }
+          },
+          updated_at: new Date()
+        })
+        .eq('firebase_uid', currentUser.uid);
       
       if (error) {
-        console.error('Error deleting API key:', error);
+        console.error('Error updating API key:', error);
       }
     } catch (error) {
       console.error('Error in handleDisconnectInstantly:', error);
@@ -505,26 +594,14 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Password Section */}
       <div className="mt-8">
-        <h3 className="text-xl font-semibold text-text-dark mb-4">Account Security</h3>
+        <h3 className="text-xl font-semibold text-text-dark mb-4">Security</h3>
         <div className="card">
-          <div className="mb-4">
-            <h4 className="text-lg font-medium text-text-dark mb-2">Change Password</h4>
-            <p className="text-gray-600 mb-3">Ensure your account is using a strong password for security.</p>
-            
-            {isChangingPassword ? (
-              <form onSubmit={handleUpdatePassword}>
-                {passwordError && (
-                  <div className="mb-3 p-2 bg-red-100 text-red-700 rounded">
-                    {passwordError}
-                  </div>
-                )}
-                {passwordSuccess && (
-                  <div className="mb-3 p-2 bg-green-100 text-green-700 rounded">
-                    {passwordSuccess}
-                  </div>
-                )}
-                <div className="mb-3">
+          {isChangingPassword ? (
+            <form onSubmit={handleUpdatePassword}>
+              <div className="space-y-4">
+                <div>
                   <label className="block text-text-dark mb-1">Current Password</label>
                   <input
                     type="password"
@@ -535,7 +612,7 @@ const Profile = () => {
                     required
                   />
                 </div>
-                <div className="mb-3">
+                <div>
                   <label className="block text-text-dark mb-1">New Password</label>
                   <input
                     type="password"
@@ -546,7 +623,7 @@ const Profile = () => {
                     required
                   />
                 </div>
-                <div className="mb-4">
+                <div>
                   <label className="block text-text-dark mb-1">Confirm New Password</label>
                   <input
                     type="password"
@@ -557,10 +634,32 @@ const Profile = () => {
                     required
                   />
                 </div>
+                
+                {passwordError && (
+                  <div className="p-3 bg-red-100 text-red-700 rounded-md">
+                    {passwordError}
+                  </div>
+                )}
+                
+                {passwordSuccess && (
+                  <div className="p-3 bg-green-100 text-green-700 rounded-md">
+                    {passwordSuccess}
+                  </div>
+                )}
+                
                 <div className="flex space-x-3 mt-4">
                   <button
                     type="button"
-                    onClick={() => setIsChangingPassword(false)}
+                    onClick={() => {
+                      setIsChangingPassword(false);
+                      setPasswordError('');
+                      setPasswordSuccess('');
+                      setPasswordData({
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                      });
+                    }}
                     className="px-4 py-2 bg-gray-200 text-text-dark rounded-md hover:bg-gray-300 transition-colors"
                   >
                     Cancel
@@ -572,18 +671,19 @@ const Profile = () => {
                     Update Password
                   </button>
                 </div>
-              </form>
-            ) : (
-              <div className="mt-4">
-                <button 
-                  className="btn-secondary"
-                  onClick={() => setIsChangingPassword(true)}
-                >
-                  Update Password
-                </button>
               </div>
-            )}
-          </div>
+            </form>
+          ) : (
+            <div>
+              <p className="text-gray-600 mb-4">Change your account password.</p>
+              <button
+                onClick={() => setIsChangingPassword(true)}
+                className="btn-secondary"
+              >
+                Change Password
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
