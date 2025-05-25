@@ -7,12 +7,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [formData, setFormData] = useState({
-    fullName: '',
-    company: '',
-    role: '',
-    email: ''
-  });
+  const [formData, setFormData] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -182,6 +177,49 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container mt-4">
+        <div className="row justify-content-center">
+          <div className="col-md-8">
+            <div className="card">
+              <div className="card-header">
+                <h5>Profile Settings</h5>
+              </div>
+              <div className="card-body text-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2">Loading profile data...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!formData) {
+    return (
+      <div className="container mt-4">
+        <div className="row justify-content-center">
+          <div className="col-md-8">
+            <div className="card">
+              <div className="card-header">
+                <h5>Profile Settings</h5>
+              </div>
+              <div className="card-body">
+                <div className="alert alert-danger" role="alert">
+                  {error || "Failed to load profile data. Please try again later."}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mt-4">
