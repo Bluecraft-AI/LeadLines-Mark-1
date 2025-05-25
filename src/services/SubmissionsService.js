@@ -5,9 +5,10 @@ import { supabase } from '../config/supabase';
  * Service for handling CSV submissions with proper ID alignment
  * This implementation ensures:
  * 1. Correct path structure: csv-files/{{user ID}}/{{submission ID}}/{{file name}}
- * 2. Compatibility with n8n workflows
- * 3. Support for Firebase authentication
- * 4. Maximum permissions with minimal restrictions
+ * 2. Proper handling of File objects
+ * 3. Compatibility with n8n workflows
+ * 4. Support for Firebase authentication
+ * 5. Maximum permissions with minimal restrictions
  */
 class SubmissionsService {
   /**
@@ -61,10 +62,19 @@ class SubmissionsService {
       const user = auth.currentUser;
       const userId = user ? user.uid : 'anonymous';
       
+      // Ensure file is a valid File object with a name
+      if (!file || !file.name) {
+        console.error('Invalid file object:', file);
+        throw new Error('Invalid file: missing name property');
+      }
+      
+      // Extract the file name safely
+      const fileName = file.name;
+      
       console.log('Uploading CSV file for submission_id:', submissionId);
       
       // Use the correct path structure: {{user ID}}/{{submission ID}}/{{file name}}
-      const filePath = `${userId}/${submissionId}/${Date.now()}_${file.name}`;
+      const filePath = `${userId}/${submissionId}/${fileName}`;
       
       console.log('File path:', filePath);
       
@@ -292,11 +302,17 @@ class SubmissionsService {
         throw new Error('Cannot download: File is still being processed or unavailable.');
       }
       
+      // Remove 'csv-files/' prefix if it exists
+      // This is because the storage.from('csv-files') already specifies the bucket
+      const cleanPath = path.startsWith('csv-files/') ? path.substring('csv-files/'.length) : path;
+      
+      console.log('Using cleaned path for download:', cleanPath);
+      
       // Create a signed URL
       const { data, error } = await supabase
         .storage
         .from('csv-files')
-        .createSignedUrl(path, 60); // 60 seconds expiry
+        .createSignedUrl(cleanPath, 60); // 60 seconds expiry
       
       if (error) throw error;
       
@@ -411,4 +427,6 @@ class SubmissionsService {
   }
 }
 
-export default new SubmissionsService();
+// Export a singleton instance for consistent usage across components
+const submissionsService = new SubmissionsService();
+export default submissionsService;
