@@ -4,7 +4,7 @@ import { supabase } from '../config/supabase';
 /**
  * Service for handling CSV submissions with proper ID alignment
  * This implementation ensures:
- * 1. Direct mapping between submission IDs and storage paths
+ * 1. Correct path structure: csv-files/{{user ID}}/{{submission ID}}/{{file name}}
  * 2. Compatibility with n8n workflows
  * 3. Support for Firebase authentication
  * 4. Maximum permissions with minimal restrictions
@@ -55,16 +55,16 @@ class SubmissionsService {
    * @param {File} file - The file to upload
    * @returns {Promise<Object>} - The upload result
    */
-  async uploadCSVFile(submissionId, file) {
+  async uploadFile(submissionId, file) {
     try {
       // Get current user from Firebase auth
       const user = auth.currentUser;
+      const userId = user ? user.uid : 'anonymous';
       
       console.log('Uploading CSV file for submission_id:', submissionId);
       
-      // Use submission ID directly in the path for proper alignment
-      // This ensures direct mapping between table records and storage files
-      const filePath = `${submissionId}/${Date.now()}_${file.name}`;
+      // Use the correct path structure: {{user ID}}/{{submission ID}}/{{file name}}
+      const filePath = `${userId}/${submissionId}/${Date.now()}_${file.name}`;
       
       console.log('File path:', filePath);
       
@@ -85,6 +85,17 @@ class SubmissionsService {
       console.error('Error uploading file:', error);
       return { data: null, error };
     }
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * 
+   * @param {string} submissionId - The submission ID
+   * @param {File} file - The file to upload
+   * @returns {Promise<Object>} - The upload result
+   */
+  async uploadCSVFile(submissionId, file) {
+    return this.uploadFile(submissionId, file);
   }
   
   /**

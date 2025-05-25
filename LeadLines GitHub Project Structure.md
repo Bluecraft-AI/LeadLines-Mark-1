@@ -168,6 +168,7 @@ The application uses React Router with the following main routes:
 
 ## Recent Updates
 
+- **Path Structure Fix** - Fixed file path structure issues in CSV upload and download functionality. Updated `SubmissionsService.js` to use correct path structure: `csv-files/{{user ID}}/{{submission ID}}/{{file name}}`. Added missing `uploadFile` function and ensured compatibility with n8n workflows. Enhanced Supabase configuration to support both Vite and Create React App environment variables. Resolved "uploadFile is not a function" and "Object not found" errors.
 - **ID Mapping Fix** - Fixed ID mapping between Supabase tables, storage buckets, and n8n workflows. Implemented maximum permissions for all tables and storage buckets. Added Firebase authentication support without disrupting ID alignment. Fixed download functionality for processed files. Enhanced submission display and file handling.
 - **Download Functionality Fix** - Enhanced `SubmissionsPage.jsx` to properly prioritize `processed_file_path` for downloads with fallback to `file_path`. Added `isDownloadAvailable()` helper function and improved error handling in Supabase configuration.
 - Enhanced `SubmissionsPage.jsx` to properly display all submissions regardless of file_path status.
