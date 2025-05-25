@@ -185,11 +185,10 @@ const CSVUploadForm = () => {
           return;
         }
         
-        // Upload file to Supabase Storage
+        // Upload file to Supabase Storage - FIXED: Corrected argument order
         const { error: uploadError } = await SubmissionsService.uploadFile(
-          selectedFiles[i],
-          currentUser.uid,
-          submissionId
+          submissionId,  // First parameter should be submissionId
+          selectedFiles[i]  // Second parameter should be the file
         );
         
         if (uploadError) {
@@ -382,4 +381,4 @@ const CSVUploadForm = () => {
   );
 };
 
-export default CSVUploadForm; 
+export default CSVUploadForm;

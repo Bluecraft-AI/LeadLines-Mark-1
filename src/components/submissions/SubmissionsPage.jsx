@@ -140,48 +140,47 @@ const SubmissionsPage = () => {
     setEditName('');
   };
 
-  // Handle download action
+  // Handle download action - FIXED: Use programmatic download instead of opening new tab
   const handleDownload = async (submission) => {
     try {
+      let downloadUrl;
+      
       // First check processed_file_path (preferred)
       if (submission.processed_file_path) {
         console.log('Using processed_file_path for download:', submission.processed_file_path);
-        const downloadUrl = await SubmissionsService.getFileDownloadUrl(submission.processed_file_path);
-        
-        if (!downloadUrl) {
-          console.error('Error getting file URL');
-          setError('Failed to get download link. Please try again.');
-          return;
-        }
-        
-        // Open download in new tab
-        window.open(downloadUrl, '_blank');
-        return;
+        downloadUrl = await SubmissionsService.getFileDownloadUrl(submission.processed_file_path);
       }
-      
       // Fallback to file_path if processed_file_path is not available
-      if (submission.file_path && submission.file_path !== 'NULL/MISSING') {
+      else if (submission.file_path && submission.file_path !== 'NULL/MISSING') {
         console.log('Using file_path for download:', submission.file_path);
         const filePath = submission.file_path.startsWith('/') 
           ? submission.file_path.substring(1) 
           : submission.file_path;
           
-        const downloadUrl = await SubmissionsService.getFileDownloadUrl(filePath);
-        
-        if (!downloadUrl) {
-          console.error('Error getting file URL');
-          setError('Failed to get download link. Please try again.');
-          return;
-        }
-        
-        // Open download in new tab
-        window.open(downloadUrl, '_blank');
+        downloadUrl = await SubmissionsService.getFileDownloadUrl(filePath);
+      }
+      else {
+        // If neither path is available
+        console.error('No valid file path available for download');
+        setError('Processed file not available for download yet.');
         return;
       }
       
-      // If neither path is available
-      console.error('No valid file path available for download');
-      setError('Processed file not available for download yet.');
+      if (!downloadUrl) {
+        console.error('Error getting file URL');
+        setError('Failed to get download link. Please try again.');
+        return;
+      }
+      
+      // Create a temporary anchor element for direct download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', ''); // This triggers download instead of navigation
+      link.setAttribute('target', '_self'); // Ensure it doesn't open in a new tab
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Failed to download file. Please try again later.');
@@ -398,4 +397,4 @@ const SubmissionsPage = () => {
   );
 };
 
-export default SubmissionsPage; 
+export default SubmissionsPage;
