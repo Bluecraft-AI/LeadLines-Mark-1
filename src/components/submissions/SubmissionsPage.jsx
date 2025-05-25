@@ -12,11 +12,16 @@ const SubmissionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingSubmission, setEditingSubmission] = useState(null);
   const [editName, setEditName] = useState('');
+  const [initialized, setInitialized] = useState(false);
 
   // Fetch submissions from Supabase
   const fetchSubmissions = async () => {
     try {
-      setLoading(true);
+      // Don't set loading to true if we're already initialized
+      // This prevents the double loading spinner
+      if (!initialized) {
+        setLoading(true);
+      }
       
       // Get current user
       if (!currentUser) {
@@ -46,6 +51,7 @@ const SubmissionsPage = () => {
       setSubmissions([]);
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -77,7 +83,7 @@ const SubmissionsPage = () => {
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (currentUser) {
+      if (currentUser && initialized) {
         fetchSubmissions();
       }
     }, 500);
