@@ -8,12 +8,7 @@ import ChatbotInterface from './ChatbotInterface';
  */
 const AgentPage = () => {
   return (
-    <div style={{ 
-      position: "relative", 
-      width: "100%", 
-      height: "100%", 
-      overflow: "hidden" 
-    }}>
+    <div className="flex flex-col w-full h-full overflow-hidden">
       <ChatbotInterface />
     </div>
   );
