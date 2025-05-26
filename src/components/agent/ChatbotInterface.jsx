@@ -396,12 +396,12 @@ const ChatbotInterface = () => {
       {/* Chat container - With modern curved edges and flex layout */}
       <div 
         ref={chatContainerRef}
-        className="flex flex-col flex-grow border border-gray-200 rounded-[20px] overflow-hidden"
+        className="flex flex-col flex-grow border border-gray-200 rounded-[20px] overflow-hidden min-h-0"
       >
         {/* Messages area - With scrolling */}
         <div 
           ref={chatMessagesRef}
-          className="flex-grow overflow-y-auto p-4 space-y-4"
+          className="flex-grow overflow-y-auto p-4 space-y-4 min-h-0"
         >
           {/* Messages will be added here dynamically */}
         </div>
