@@ -5,8 +5,11 @@ import AssistantService from '../../services/AssistantService';
 /**
  * ChatbotInterface component for the LeadLines AI Agent section
  * Integrates with n8n webhook and includes user's assistant_id
+ * With hardened message state management and error handling
  */
 const ChatbotInterface = () => {
+  // Persistent message storage with useRef to prevent state reset issues
+  const messagesRef = useRef([]);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +57,17 @@ const ChatbotInterface = () => {
 
   // Add welcome message on component mount
   useEffect(() => {
-    addMessage('assistant', 'Hello! I\'m your chat assistant. How can I help you today?');
+    const welcomeMessage = {
+      id: Date.now(),
+      sender: 'assistant',
+      content: 'Hello! I\'m your chat assistant. How can I help you today?',
+      isTyping: false,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Update both the ref and the state
+    messagesRef.current = [welcomeMessage];
+    setMessages([welcomeMessage]);
   }, []);
 
   // Scroll to bottom when messages change
@@ -76,7 +89,7 @@ const ChatbotInterface = () => {
     }
   };
 
-  // Add a message to the chat
+  // Add a message to the chat - with hardened state management
   const addMessage = (sender, content, isTyping = false) => {
     const newMessage = {
       id: Date.now(),
@@ -86,14 +99,22 @@ const ChatbotInterface = () => {
       timestamp: new Date().toISOString()
     };
     
-    // Use functional update to ensure we're working with the latest state
-    setMessages(prevMessages => [...prevMessages, newMessage]);
+    // Update the ref first to ensure persistence
+    messagesRef.current = [...messagesRef.current, newMessage];
+    
+    // Then update the state for rendering
+    setMessages([...messagesRef.current]);
+    
     return newMessage.id;
   };
 
-  // Remove a message by ID
+  // Remove a message by ID - with hardened state management
   const removeMessage = (messageId) => {
-    setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
+    // Update the ref first
+    messagesRef.current = messagesRef.current.filter(msg => msg.id !== messageId);
+    
+    // Then update the state for rendering
+    setMessages([...messagesRef.current]);
   };
 
   // Show typing indicator
@@ -114,21 +135,27 @@ const ChatbotInterface = () => {
     setSessionId(newSessionId);
     console.log('Started new conversation with session ID:', newSessionId);
     
-    // Clear chat messages
-    setMessages([]);
+    // Clear chat messages in both ref and state
+    const welcomeMessage = {
+      id: Date.now(),
+      sender: 'assistant',
+      content: 'Hello! I\'m your chat assistant. How can I help you today?',
+      isTyping: false,
+      timestamp: new Date().toISOString()
+    };
     
-    // Add welcome message
-    addMessage('assistant', 'Hello! I\'m your chat assistant. How can I help you today?');
+    messagesRef.current = [welcomeMessage];
+    setMessages([welcomeMessage]);
   };
 
-  // Handle form submission
+  // Handle form submission with hardened error handling
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     const message = inputValue.trim();
     if (!message || isSubmitting) return;
     
-    // Store the user message to add to chat
+    // Store the user message
     const userMessage = message;
     
     // Clear input and reset height
@@ -138,9 +165,8 @@ const ChatbotInterface = () => {
       textarea.style.height = 'auto';
     }
     
-    // Add user message to chat - do this BEFORE showing typing indicator
-    // to ensure it's not accidentally removed
-    addMessage('user', userMessage);
+    // Add user message to chat FIRST - before any async operations
+    const userMessageId = addMessage('user', userMessage);
     
     // Show typing indicator
     const typingIndicatorId = showTypingIndicator();
@@ -173,35 +199,40 @@ const ChatbotInterface = () => {
       // Remove typing indicator
       removeMessage(typingIndicatorId);
       
+      let botResponse = 'I received your message, but I\'m not sure how to respond.';
+      
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-      }
-      
-      // Parse response
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
+        botResponse = 'Sorry, I encountered an error processing your request. Please try again.';
       } else {
-        data = await response.text();
-      }
-      
-      // Extract the response message
-      let botResponse = 'I received your message, but I\'m not sure how to respond.';
-      
-      if (typeof data === 'string') {
-        botResponse = data;
-      } else if (data && typeof data === 'object') {
-        botResponse = data.output || 
-                    data.response || 
-                    data.message || 
-                    data.text || 
-                    data.reply || 
-                    data.result || 
-                    JSON.stringify(data);
+        try {
+          // Parse response
+          const contentType = response.headers.get('content-type');
+          let data;
+          
+          if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+          } else {
+            data = await response.text();
+          }
+          
+          // Extract the response message
+          if (typeof data === 'string') {
+            botResponse = data;
+          } else if (data && typeof data === 'object') {
+            botResponse = data.output || 
+                        data.response || 
+                        data.message || 
+                        data.text || 
+                        data.reply || 
+                        data.result || 
+                        JSON.stringify(data);
+          }
+        } catch (parseError) {
+          console.error('Error parsing response:', parseError);
+          botResponse = 'I received your message, but had trouble understanding the response.';
+        }
       }
       
       // Add assistant response to chat
@@ -209,6 +240,8 @@ const ChatbotInterface = () => {
       
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Remove typing indicator if it exists
       removeMessage(typingIndicatorId);
       
       // Show error message
