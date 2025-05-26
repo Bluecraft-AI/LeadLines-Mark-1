@@ -86,13 +86,14 @@ const ChatbotInterface = () => {
       timestamp: new Date().toISOString()
     };
     
-    setMessages(prev => [...prev, newMessage]);
+    // Use functional update to ensure we're working with the latest state
+    setMessages(prevMessages => [...prevMessages, newMessage]);
     return newMessage.id;
   };
 
   // Remove a message by ID
   const removeMessage = (messageId) => {
-    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
   };
 
   // Show typing indicator
@@ -127,8 +128,8 @@ const ChatbotInterface = () => {
     const message = inputValue.trim();
     if (!message || isSubmitting) return;
     
-    // Add user message to chat
-    addMessage('user', message);
+    // Store the user message to add to chat
+    const userMessage = message;
     
     // Clear input and reset height
     setInputValue('');
@@ -136,6 +137,10 @@ const ChatbotInterface = () => {
     if (textarea) {
       textarea.style.height = 'auto';
     }
+    
+    // Add user message to chat - do this BEFORE showing typing indicator
+    // to ensure it's not accidentally removed
+    addMessage('user', userMessage);
     
     // Show typing indicator
     const typingIndicatorId = showTypingIndicator();
@@ -151,7 +156,7 @@ const ChatbotInterface = () => {
       const payload = {
         assistant_id: assistantId,
         conversationId: sessionId,
-        message: message
+        message: userMessage
       };
       
       console.log('Sending payload:', payload);
