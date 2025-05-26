@@ -254,9 +254,10 @@ const ChatbotInterface = () => {
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
-    if (chatMessagesRef.current) {
-      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
-    }
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
   };
 
   // Start a new conversation
@@ -381,10 +382,10 @@ const ChatbotInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden">
-      {/* Header section - Redesigned with reduced spacing between button and chat container */}
-      <div className="mb-2 flex-shrink-0">
-        <h1 className="text-2xl font-semibold text-black mb-4">AI Agent</h1>
+    <div className="relative w-full h-full">
+      {/* Fixed Header Banner */}
+      <div className="fixed top-0 left-0 right-0 bg-white shadow-md z-10 px-4 py-3">
+        <h1 className="text-2xl font-semibold text-black mb-3">AI Agent</h1>
         <button 
           onClick={startNewConversation}
           className="bg-secondary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all mb-2"
@@ -393,37 +394,35 @@ const ChatbotInterface = () => {
         </button>
       </div>
       
-      {/* Chat container - With modern curved edges and flex layout */}
-      <div 
-        ref={chatContainerRef}
-        className="flex flex-col flex-grow border border-gray-200 rounded-[20px] overflow-hidden min-h-0"
-      >
-        {/* Messages area - With scrolling */}
-        <div 
-          ref={chatMessagesRef}
-          className="flex-grow overflow-y-auto p-4 space-y-4 min-h-0"
-        >
+      {/* Scrollable Message Area */}
+      <div className="w-full px-4" 
+           style={{ 
+             paddingTop: "110px", // Adjust based on header height
+             paddingBottom: "90px", // Adjust based on footer height
+             minHeight: "100vh" 
+           }}>
+        <div ref={chatMessagesRef} className="space-y-4">
           {/* Messages will be added here dynamically */}
         </div>
-        
-        {/* Input area - Fixed at bottom */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
-          <div className="relative">
-            <textarea
-              ref={chatInputRef}
-              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
-              placeholder="Type your message here..."
-              rows="1"
-            ></textarea>
-            <button
-              ref={sendButtonRef}
-              className="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center bg-secondary text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
+      </div>
+      
+      {/* Fixed Footer Banner */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-md z-10 p-4 border-t border-gray-200">
+        <div className="relative">
+          <textarea
+            ref={chatInputRef}
+            className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+            placeholder="Type your message here..."
+            rows="1"
+          ></textarea>
+          <button
+            ref={sendButtonRef}
+            className="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center bg-secondary text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
