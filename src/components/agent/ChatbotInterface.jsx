@@ -381,9 +381,18 @@ const ChatbotInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden">
+    <div style={{ 
+      position: "absolute", 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0, 
+      display: "flex", 
+      flexDirection: "column", 
+      overflow: "hidden" 
+    }}>
       {/* Header section - Redesigned with reduced spacing between button and chat container */}
-      <div className="mb-2 flex-shrink-0">
+      <div style={{ padding: "20px 20px 10px 20px" }}>
         <h1 className="text-2xl font-semibold text-black mb-4">AI Agent</h1>
         <button 
           onClick={startNewConversation}
@@ -393,23 +402,44 @@ const ChatbotInterface = () => {
         </button>
       </div>
       
-      {/* Chat container - With modern curved edges and adaptive height */}
+      {/* Chat container - With modern curved edges and absolute positioning to fill available space */}
       <div 
         ref={chatContainerRef}
-        className="relative flex-grow border border-gray-200 rounded-[20px] overflow-hidden"
-        style={{ minHeight: "200px" }} // Minimum height for usability on very small screens
+        className="border border-gray-200 rounded-[20px] overflow-hidden"
+        style={{ 
+          margin: "0 20px 20px 20px",
+          flex: "1 1 auto",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          minHeight: "300px" // Ensure minimum usable height
+        }}
       >
         {/* Messages area - With scrolling */}
         <div 
           ref={chatMessagesRef}
-          className="absolute inset-0 bottom-[64px] overflow-y-auto p-4 space-y-4"
+          className="p-4 space-y-4 overflow-y-auto"
+          style={{ 
+            position: "absolute", 
+            top: 0, 
+            bottom: "64px", 
+            left: 0, 
+            right: 0 
+          }}
         >
           {/* Messages will be added here dynamically */}
         </div>
         
         {/* Input area - Fixed at bottom */}
         <div 
-          className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white"
+          className="p-4 border-t border-gray-200 bg-white"
+          style={{ 
+            position: "absolute", 
+            bottom: 0, 
+            left: 0, 
+            right: 0,
+            height: "64px"
+          }}
         >
           <div className="relative">
             <textarea

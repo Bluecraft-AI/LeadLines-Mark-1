@@ -4,11 +4,16 @@ import ChatbotInterface from './ChatbotInterface';
 /**
  * AgentPage component for the LeadLines AI Agent section
  * Simplified version that only includes the ChatbotInterface
- * Updated to ensure proper container sizing
+ * Updated to ensure proper container sizing and positioning
  */
 const AgentPage = () => {
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden">
+    <div style={{ 
+      position: "relative", 
+      width: "100%", 
+      height: "100%", 
+      overflow: "hidden" 
+    }}>
       <ChatbotInterface />
     </div>
   );
