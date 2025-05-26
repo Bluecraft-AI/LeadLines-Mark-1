@@ -5,12 +5,14 @@ import AssistantService from '../../services/AssistantService';
 /**
  * ChatbotInterface component for the LeadLines AI Agent section
  * Direct adaptation of the working HTML version to React
+ * With updated UI to match LeadLines application style
  */
 const ChatbotInterface = () => {
   // DOM References
   const chatMessagesRef = useRef(null);
   const chatInputRef = useRef(null);
   const sendButtonRef = useRef(null);
+  const chatContainerRef = useRef(null);
   
   // Internal state references (not React state)
   const sessionIdRef = useRef('');
@@ -352,42 +354,50 @@ const ChatbotInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-primary">
-      <div className="flex justify-between items-center p-4 bg-secondary text-text-light">
-        <div>
-          <h1 className="text-xl font-semibold">AI Agent</h1>
-        </div>
+    <div className="flex flex-col h-full">
+      {/* Header section - Redesigned to match application style */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-black mb-2">AI Agent</h1>
         <button 
           onClick={startNewConversation}
-          className="bg-accent text-text-dark px-4 py-2 rounded-md hover:bg-opacity-90 transition-all"
+          className="bg-secondary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all"
         >
           New Conversation
         </button>
       </div>
       
+      {/* Chat container - With modern curved edges and full height */}
       <div 
-        ref={chatMessagesRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        ref={chatContainerRef}
+        className="flex flex-col flex-grow border border-gray-200 rounded-[20px] overflow-hidden"
+        style={{ height: 'calc(100vh - 180px)' }}
       >
-        {/* Messages will be added here dynamically */}
-      </div>
-      
-      <div className="p-4 border-t border-gray-200">
-        <div className="relative">
-          <textarea
-            ref={chatInputRef}
-            className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
-            placeholder="Type your message here..."
-            rows="1"
-          ></textarea>
-          <button
-            ref={sendButtonRef}
-            className="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center bg-secondary text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
+        {/* Messages area - With scrolling */}
+        <div 
+          ref={chatMessagesRef}
+          className="flex-grow overflow-y-auto p-4 space-y-4"
+        >
+          {/* Messages will be added here dynamically */}
+        </div>
+        
+        {/* Input area - Fixed at bottom */}
+        <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="relative">
+            <textarea
+              ref={chatInputRef}
+              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+              placeholder="Type your message here..."
+              rows="1"
+            ></textarea>
+            <button
+              ref={sendButtonRef}
+              className="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center bg-secondary text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
