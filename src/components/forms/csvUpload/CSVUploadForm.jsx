@@ -7,7 +7,7 @@ import SubmissionsService from '../../../services/SubmissionsService';
 const CSVUploadForm = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [emailCount, setEmailCount] = useState('');
-  const [notes, setNotes] = useState('');
+  const [submissionName, setSubmissionName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ text: '', type: '' });
   const fileInputRef = useRef(null);
@@ -158,9 +158,9 @@ const CSVUploadForm = () => {
         formData.append('number_of_emails', emailCount);
       }
       
-      // Add notes field if it has content
-      if (notes.trim()) {
-        formData.append('additional_notes', notes);
+      // Add submission name field if it has content
+      if (submissionName.trim()) {
+        formData.append('submission_name', submissionName);
       }
       
       // Add files
@@ -174,9 +174,9 @@ const CSVUploadForm = () => {
           user_id: currentUser.uid,
           user_email: currentUser.email,
           original_filename: selectedFiles[i].name,
-          custom_name: selectedFiles[i].name, // Initially set custom name to original filename
-          email_count: parseInt(emailCount) || 0,
-          notes: notes
+          custom_name: submissionName.trim() || selectedFiles[i].name, // Use submission name if provided, otherwise use filename
+          email_count: parseInt(emailCount) || 0
+          // notes field removed entirely as requested
         });
         
         if (error) {
@@ -250,7 +250,7 @@ const CSVUploadForm = () => {
   const resetForm = () => {
     setSelectedFiles([]);
     setEmailCount('');
-    setNotes('');
+    setSubmissionName('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -348,18 +348,18 @@ const CSVUploadForm = () => {
             </div>
             
             <div>
-              <label htmlFor="notes" className="block font-semibold mb-2">
-                Additional Notes
+              <label htmlFor="submissionName" className="block font-semibold mb-2">
+                Submission Name
               </label>
-              <textarea 
-                id="notes" 
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows="3"
+              <input 
+                type="text" 
+                id="submissionName" 
+                value={submissionName}
+                onChange={(e) => setSubmissionName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                placeholder="Enter any additional information about your CSV file here..."
+                placeholder="Enter the name of your submission here..."
               />
-              <p className="text-xs text-gray-500 mt-1">Optional: Add any context or special instructions related to your upload.</p>
+              <p className="text-xs text-gray-500 mt-1">Optional: Add any name related to this submission for better organization.</p>
             </div>
             
             <button 
