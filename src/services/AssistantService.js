@@ -51,7 +51,7 @@ class AssistantService {
       
       // Get the assistant using Firebase UID directly
       const { data, error } = await supabase
-        .from('user_assistants')
+        .from('assistant_users')
         .select('*')
         .eq('user_id', user.uid)
         .single();
@@ -80,7 +80,7 @@ class AssistantService {
       }
 
       const { data, error } = await supabase
-        .from('user_assistants')
+        .from('assistant_users')
         .select('*')
         .eq('user_id', user.uid);
 
@@ -109,7 +109,7 @@ class AssistantService {
       }
 
       const { data, error } = await supabase
-        .from('user_assistants')
+        .from('assistant_users')
         .upsert([
           {
             user_id: user.uid,
