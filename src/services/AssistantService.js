@@ -5,6 +5,38 @@ import { auth } from '../config/firebase';
  * Service for managing OpenAI Assistants with Firebase authentication
  */
 class AssistantService {
+  constructor() {
+    this.baseUrl = 'https://us-central1-leadlines-portal.cloudfunctions.net';
+    this.endpoints = {
+      listMessages: `${this.baseUrl}/listMessages`,
+      createMessage: `${this.baseUrl}/createMessage`,
+      runAssistant: `${this.baseUrl}/runAssistant`,
+      deleteThread: `${this.baseUrl}/deleteThread`,
+      attachFileToAssistant: `${this.baseUrl}/attachFileToAssistant`,
+      getRun: `${this.baseUrl}/getRun`,
+      testFunction: `${this.baseUrl}/testFunction`,
+      uploadFile: `${this.baseUrl}/uploadFile`,
+      deleteFile: `${this.baseUrl}/deleteFile`,
+      removeFileFromAssistant: `${this.baseUrl}/removeFileFromAssistant`,
+      sendMessageAndWaitForResponse: `${this.baseUrl}/sendMessageAndWaitForResponse`,
+      createThread: `${this.baseUrl}/createThread`
+    };
+  }
+
+  // Helper method to get Firebase ID token
+  async getIdToken() {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+      return await user.getIdToken(true);
+    } catch (error) {
+      console.error('Error getting ID token:', error);
+      throw error;
+    }
+  }
+
   /**
    * Get the user's assistant
    * @returns {Promise<Object>} The assistant object
@@ -37,29 +69,92 @@ class AssistantService {
   }
 
   /**
+   * Get all user assistants
+   * @returns {Promise<Array>} Array of assistants
+   */
+  async getUserAssistants() {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+
+      const { data, error } = await supabase
+        .from('user_assistants')
+        .select('*')
+        .eq('user_id', user.uid);
+
+      if (error) {
+        console.error('Error getting user assistants:', error);
+        throw error;
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getUserAssistants:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save user assistant to Supabase
+   * @param {Object} assistantData - The assistant data
+   * @returns {Promise<Object>} The saved assistant
+   */
+  async saveUserAssistant(assistantData) {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+
+      const { data, error } = await supabase
+        .from('user_assistants')
+        .upsert([
+          {
+            user_id: user.uid,
+            assistant_id: assistantData.assistant_id,
+            metadata: assistantData.metadata || {},
+            status: assistantData.status || 'active',
+            last_accessed_at: new Date()
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error saving user assistant:', error);
+        throw error;
+      }
+
+      return data[0];
+    } catch (error) {
+      console.error('Error in saveUserAssistant:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create a new thread
    * @returns {Promise<Object>} The created thread
    */
   async createThread() {
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error('User not authenticated');
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(this.endpoints.createThread, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error creating thread: ${response.statusText}`);
       }
       
-      const { data, error } = await supabase
-        .from('assistant_threads')
-        .insert([
-          { user_id: user.uid }
-        ])
-        .select();
-      
-      if (error) {
-        console.error('Error creating thread:', error);
-        throw error;
-      }
-      
-      return data[0];
+      return await response.json();
     } catch (error) {
       console.error('Error creating thread:', error);
       throw error;
@@ -99,13 +194,16 @@ class AssistantService {
    */
   async createMessage(threadId, content) {
     try {
-      const response = await fetch('/api/openai/createMessage', {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(this.endpoints.createMessage, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+          'Authorization': `Bearer ${idToken}`
         },
-        body: JSON.stringify({ threadId, content })
+        body: JSON.stringify({ threadId, content }),
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -140,16 +238,19 @@ class AssistantService {
         throw new Error('No assistant found for user');
       }
       
-      const response = await fetch('/api/openai/runAssistant', {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(this.endpoints.runAssistant, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({ 
           threadId, 
           assistantId: assistant.assistant_id 
-        })
+        }),
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -171,10 +272,13 @@ class AssistantService {
    */
   async getRun(threadId, runId) {
     try {
-      const response = await fetch(`/api/openai/getRun?threadId=${threadId}&runId=${runId}`, {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(`${this.endpoints.getRun}?threadId=${threadId}&runId=${runId}`, {
         headers: {
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        }
+          'Authorization': `Bearer ${idToken}`
+        },
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -195,10 +299,13 @@ class AssistantService {
    */
   async listMessages(threadId) {
     try {
-      const response = await fetch(`/api/openai/listMessages?threadId=${threadId}`, {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(`${this.endpoints.listMessages}?threadId=${threadId}`, {
         headers: {
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        }
+          'Authorization': `Bearer ${idToken}`
+        },
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -219,15 +326,19 @@ class AssistantService {
    */
   async uploadFile(file) {
     try {
+      const idToken = await this.getIdToken();
+      
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('purpose', 'assistants');
       
-      const response = await fetch('/api/openai/uploadFile', {
+      const response = await fetch(this.endpoints.uploadFile, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+          'Authorization': `Bearer ${idToken}`
         },
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -267,16 +378,19 @@ class AssistantService {
         throw new Error('No assistant found for user');
       }
       
-      const response = await fetch('/api/openai/attachFileToAssistant', {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(this.endpoints.attachFileToAssistant, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({ 
           fileId, 
           assistantId: assistant.assistant_id 
-        })
+        }),
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -346,11 +460,14 @@ class AssistantService {
       await this.removeFileFromAssistant(fileId);
       
       // Then delete the file from OpenAI
-      const response = await fetch(`/api/openai/deleteFile?fileId=${fileId}`, {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(`${this.endpoints.deleteFile}?fileId=${fileId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        }
+          'Authorization': `Bearer ${idToken}`
+        },
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -383,16 +500,19 @@ class AssistantService {
         throw new Error('No assistant found for user');
       }
       
-      const response = await fetch('/api/openai/removeFileFromAssistant', {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(this.endpoints.removeFileFromAssistant, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({ 
           fileId, 
           assistantId: assistant.assistant_id 
-        })
+        }),
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -413,11 +533,14 @@ class AssistantService {
    */
   async deleteThread(threadId) {
     try {
-      const response = await fetch(`/api/openai/deleteThread?threadId=${threadId}`, {
+      const idToken = await this.getIdToken();
+      
+      const response = await fetch(`${this.endpoints.deleteThread}?threadId=${threadId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        }
+          'Authorization': `Bearer ${idToken}`
+        },
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -446,38 +569,32 @@ class AssistantService {
    */
   async sendMessageAndWaitForResponse(threadId, content) {
     try {
-      // Create message
-      await this.createMessage(threadId, content);
+      const assistant = await this.getUserAssistant();
+      if (!assistant) {
+        throw new Error('No assistant found for user');
+      }
       
-      // Run assistant
-      const runResult = await this.runAssistant(threadId);
+      const idToken = await this.getIdToken();
       
-      // Poll for run completion
-      const maxAttempts = 30;
-      const pollInterval = 1000;
-      let attempts = 0;
+      const response = await fetch(this.endpoints.sendMessageAndWaitForResponse, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ 
+          threadId, 
+          content,
+          assistantId: assistant.assistant_id 
+        }),
+        credentials: 'include'
+      });
       
-      const pollRun = async () => {
-        attempts++;
-        
-        const runStatus = await this.getRun(threadId, runResult.runId);
-        
-        if (runStatus.status === 'completed') {
-          // Get the messages after run completes
-          const messages = await this.listMessages(threadId);
-          return messages;
-        } else if (runStatus.status === 'failed' || runStatus.status === 'cancelled') {
-          throw new Error(`Run ${runStatus.status}: ${runStatus.error?.message || 'Unknown error'}`);
-        } else if (attempts >= maxAttempts) {
-          throw new Error('Timed out waiting for assistant response');
-        } else {
-          // Wait and poll again
-          await new Promise(resolve => setTimeout(resolve, pollInterval));
-          return pollRun();
-        }
-      };
+      if (!response.ok) {
+        throw new Error(`Error sending message: ${response.statusText}`);
+      }
       
-      return await pollRun();
+      return await response.json();
     } catch (error) {
       console.error('Error sending message and waiting for response:', error);
       throw error;
