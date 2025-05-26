@@ -15,7 +15,7 @@ const CSVUploadForm = () => {
   const { currentUser } = useAuth();
   
   // Webhook URL - in a production app, this would be stored in environment variables
-  const WEBHOOK_URL = "https://bluecraftleads.app.n8n.cloud/webhook-test/363e4379-80f1-49b0-8d2f-e5ad1bc61f85";
+  const WEBHOOK_URL = "https://bluecraftleads.app.n8n.cloud/webhook/363e4379-80f1-49b0-8d2f-e5ad1bc61f85";
 
   // Handle drag and drop events
   useEffect(() => {
