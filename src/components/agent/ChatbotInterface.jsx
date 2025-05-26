@@ -382,22 +382,22 @@ const ChatbotInterface = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      {/* Header section - Redesigned to match application style with increased spacing */}
-      <div className="mb-8">
+      {/* Header section - Redesigned with reduced spacing between button and chat container */}
+      <div className="mb-2">
         <h1 className="text-2xl font-semibold text-black mb-4">AI Agent</h1>
         <button 
           onClick={startNewConversation}
-          className="bg-secondary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all"
+          className="bg-secondary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all mb-2"
         >
           New Conversation
         </button>
       </div>
       
-      {/* Chat container - With modern curved edges and full height */}
+      {/* Chat container - With modern curved edges and full height, fixed to bottom */}
       <div 
         ref={chatContainerRef}
         className="flex flex-col flex-grow border border-gray-200 rounded-[20px] overflow-hidden"
-        style={{ height: 'calc(100vh - 200px)' }}
+        style={{ height: 'calc(100vh - 140px)' }} // Adjusted to ensure it fills space and anchors to bottom
       >
         {/* Messages area - With scrolling */}
         <div 
