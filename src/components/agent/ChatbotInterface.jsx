@@ -381,9 +381,9 @@ const ChatbotInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-full w-full overflow-hidden">
       {/* Header section - Redesigned with reduced spacing between button and chat container */}
-      <div className="mb-2">
+      <div className="mb-2 flex-shrink-0">
         <h1 className="text-2xl font-semibold text-black mb-4">AI Agent</h1>
         <button 
           onClick={startNewConversation}
@@ -393,22 +393,24 @@ const ChatbotInterface = () => {
         </button>
       </div>
       
-      {/* Chat container - With modern curved edges and full height, fixed to bottom */}
+      {/* Chat container - With modern curved edges and adaptive height */}
       <div 
         ref={chatContainerRef}
-        className="flex flex-col flex-grow border border-gray-200 rounded-[20px] overflow-hidden"
-        style={{ height: 'calc(100vh - 140px)' }} // Adjusted to ensure it fills space and anchors to bottom
+        className="relative flex-grow border border-gray-200 rounded-[20px] overflow-hidden"
+        style={{ minHeight: "200px" }} // Minimum height for usability on very small screens
       >
         {/* Messages area - With scrolling */}
         <div 
           ref={chatMessagesRef}
-          className="flex-grow overflow-y-auto p-4 space-y-4"
+          className="absolute inset-0 bottom-[64px] overflow-y-auto p-4 space-y-4"
         >
           {/* Messages will be added here dynamically */}
         </div>
         
         {/* Input area - Fixed at bottom */}
-        <div className="p-4 border-t border-gray-200 bg-white">
+        <div 
+          className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white"
+        >
           <div className="relative">
             <textarea
               ref={chatInputRef}
