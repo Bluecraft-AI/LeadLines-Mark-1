@@ -18,6 +18,7 @@ const ChatbotInterface = () => {
   const sessionIdRef = useRef('');
   const assistantIdRef = useRef('');
   const isSubmittingRef = useRef(false);
+  const userInitialRef = useRef('U'); // Default user initial
   
   // Auth context for user information
   const { currentUser } = useAuth();
@@ -30,6 +31,9 @@ const ChatbotInterface = () => {
     // Generate a unique session ID
     sessionIdRef.current = generateSessionId();
     console.log('Generated session ID:', sessionIdRef.current);
+    
+    // Set user initial from current user
+    setUserInitial();
     
     // Fetch the user's assistant ID
     fetchAssistantId();
@@ -52,6 +56,29 @@ const ChatbotInterface = () => {
       }
     };
   }, []);
+
+  // Set user initial from current user
+  const setUserInitial = () => {
+    if (currentUser) {
+      // Try to get user's name from different possible properties
+      const displayName = currentUser.displayName;
+      const email = currentUser.email;
+      const fullName = currentUser.fullName; // Custom property that might exist
+      
+      let initial = 'U'; // Default
+      
+      if (displayName && displayName.length > 0) {
+        initial = displayName.charAt(0).toUpperCase();
+      } else if (fullName && fullName.length > 0) {
+        initial = fullName.charAt(0).toUpperCase();
+      } else if (email && email.length > 0) {
+        initial = email.charAt(0).toUpperCase();
+      }
+      
+      userInitialRef.current = initial;
+      console.log('Set user initial to:', initial);
+    }
+  };
 
   // Generate a unique session ID
   const generateSessionId = () => {
@@ -185,7 +212,7 @@ const ChatbotInterface = () => {
     if (sender === 'user') {
       const avatarDiv = document.createElement('div');
       avatarDiv.className = 'w-8 h-8 rounded-full bg-accent text-text-dark flex items-center justify-center text-sm ml-2 flex-shrink-0';
-      avatarDiv.textContent = 'U';
+      avatarDiv.textContent = userInitialRef.current; // Use user's initial
       messageDiv.appendChild(avatarDiv);
     }
     
@@ -354,10 +381,10 @@ const ChatbotInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header section - Redesigned to match application style */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-black mb-2">AI Agent</h1>
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Header section - Redesigned to match application style with increased spacing */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-black mb-4">AI Agent</h1>
         <button 
           onClick={startNewConversation}
           className="bg-secondary text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-all"
@@ -370,7 +397,7 @@ const ChatbotInterface = () => {
       <div 
         ref={chatContainerRef}
         className="flex flex-col flex-grow border border-gray-200 rounded-[20px] overflow-hidden"
-        style={{ height: 'calc(100vh - 180px)' }}
+        style={{ height: 'calc(100vh - 200px)' }}
       >
         {/* Messages area - With scrolling */}
         <div 
