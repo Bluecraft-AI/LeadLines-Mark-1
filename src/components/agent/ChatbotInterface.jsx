@@ -82,11 +82,29 @@ const ChatbotInterface = () => {
   // Check if scroll is needed
   const checkScrollNeeded = () => {
     if (messageContainerRef.current && chatMessagesRef.current) {
-      const containerHeight = messageContainerRef.current.clientHeight;
-      const contentHeight = chatMessagesRef.current.scrollHeight;
+      const container = messageContainerRef.current;
+      const content = chatMessagesRef.current;
       
-      // Only show scroll if content is taller than container
-      setShowScroll(contentHeight > containerHeight);
+      // Get the available height for content (container height minus padding)
+      const containerStyle = window.getComputedStyle(container);
+      const paddingTop = parseInt(containerStyle.paddingTop);
+      const paddingBottom = parseInt(containerStyle.paddingBottom);
+      const availableHeight = container.clientHeight - paddingTop - paddingBottom;
+      
+      // Get the actual content height
+      const contentHeight = content.scrollHeight;
+      
+      console.log('Scroll check:', { 
+        containerHeight: container.clientHeight,
+        paddingTop,
+        paddingBottom,
+        availableHeight,
+        contentHeight,
+        needsScroll: contentHeight > availableHeight 
+      });
+      
+      // Only show scroll if content is taller than available space
+      setShowScroll(contentHeight > availableHeight);
     }
   };
 
