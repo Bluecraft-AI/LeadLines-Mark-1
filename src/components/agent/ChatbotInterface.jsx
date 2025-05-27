@@ -430,7 +430,7 @@ const ChatbotInterface = () => {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full flex flex-col" style={{ position: 'relative' }}>
+    <div ref={containerRef} className="relative w-full h-full" style={{ position: 'relative' }}>
       {/* Sticky Header - No shadows or borders, extends fully to container edges */}
       <div className="bg-white z-10 px-4 py-3 w-full m-0" 
            style={{ 
@@ -451,15 +451,15 @@ const ChatbotInterface = () => {
       {/* Scrollable Message Area - Scroll only appears when needed */}
       <div 
         ref={messageContainerRef}
-        className="w-full px-4 flex-grow" 
+        className="w-full px-4" 
         style={{ 
+          paddingTop: "20px",
+          paddingBottom: "90px", // Adjust based on footer height
+          minHeight: "calc(100vh - 200px)", // Ensure minimum height for content
           overflowY: showScroll ? "auto" : "hidden",
-          overflowX: "hidden",
-          // Add scroll padding to prevent content from being hidden under sticky elements
-          scrollPaddingTop: '120px',
-          scrollPaddingBottom: '90px'
+          overflowX: "hidden"
         }}>
-        <div ref={chatMessagesRef} className="space-y-4 py-4">
+        <div ref={chatMessagesRef} className="space-y-4">
           {/* Messages will be added here dynamically */}
         </div>
       </div>
