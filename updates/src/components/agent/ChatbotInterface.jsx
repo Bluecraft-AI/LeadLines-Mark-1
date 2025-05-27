@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import AssistantService from '../../services/AssistantService';
+import { useAuth } from '../../../contexts/AuthContext';
+import AssistantService from '../../../services/AssistantService';
 
 /**
  * ChatbotInterface component for the LeadLines AI Agent section
@@ -9,6 +9,7 @@ import AssistantService from '../../services/AssistantService';
  * Updated to respect parent container boundaries
  * Removed shadows and borders for transparent look
  * Improved scroll behavior to only show when needed
+ * Eliminated gaps between banners and container edges
  */
 const ChatbotInterface = () => {
   // DOM References
@@ -493,4 +494,4 @@ const ChatbotInterface = () => {
   );
 };
 
-export default ChatbotInterface; 
+export default ChatbotInterface;
