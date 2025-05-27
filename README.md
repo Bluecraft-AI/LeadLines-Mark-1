@@ -1,5 +1,7 @@
 # LeadLines: Revolutionizing Cold Email Lead Generation
 
+This repository serves as the main hub for the LeadLines application, hosted at [app.leadlines.ai](https://app.leadlines.ai).
+
 ## Overview
 
 LeadLines is an innovative AI-powered software platform designed to transform your cold email lead generation efforts. By leveraging advanced automation and deep personalization, LeadLines empowers businesses to create highly tailored email sequences for each prospect, significantly boosting engagement and conversion rates. Our platform simplifies the complexities of cold outreach, ensuring scalability and technical reliability, all while providing a user-friendly experience. At the core of LeadLines are unique AI assistants, trained on each user's specific business data, delivering an unparalleled level of personalization in your outreach campaigns.
