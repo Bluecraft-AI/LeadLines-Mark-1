@@ -85,6 +85,8 @@ const ChatbotInterface = () => {
       const containerHeight = messageContainerRef.current.clientHeight;
       const contentHeight = chatMessagesRef.current.scrollHeight;
       
+      console.log('Scroll check:', { containerHeight, contentHeight, needsScroll: contentHeight > containerHeight });
+      
       // Only show scroll if content is taller than container
       setShowScroll(contentHeight > containerHeight);
     }
@@ -299,10 +301,12 @@ const ChatbotInterface = () => {
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: 'smooth'
-    });
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTo({
+        top: messageContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   // Start a new conversation
