@@ -437,7 +437,8 @@ const ChatbotInterface = () => {
              position: 'sticky', 
              top: 0,
              marginTop: '-1px', // Eliminate gap at top
-             paddingTop: 'calc(0.75rem + 1px)' // Compensate for negative margin
+             paddingTop: 'calc(0.75rem + 1px)', // Compensate for negative margin
+             boxShadow: '0 -20px 0 0 white' // White coverage above top banner only
            }}>
         <h1 className="text-2xl font-semibold text-black mb-3">AI Agent</h1>
         <button 
@@ -470,7 +471,8 @@ const ChatbotInterface = () => {
              position: 'sticky', 
              bottom: 0,
              marginBottom: '-1px', // Eliminate gap at bottom
-             paddingBottom: 'calc(1rem + 1px)' // Compensate for negative margin
+             paddingBottom: 'calc(1rem + 1px)', // Compensate for negative margin
+             boxShadow: '0 20px 0 0 white' // White coverage below bottom banner only
            }}>
         <div className="relative">
           <textarea
