@@ -1,11 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import AssistantService from '../../services/AssistantService';
 
 /**
  * ChatbotInterface component for the LeadLines AI Agent section
- * Direct adaptation of the working HTML version to React
- * With updated UI to match LeadLines application style
+ * Redesigned with sticky header/footer and scrollable message area
+ * Optimized for proper layout within the application
+ * Updated to respect parent container boundaries
+ * Removed shadows and borders for transparent look
+ * Improved scroll behavior to only show when needed
  */
 const ChatbotInterface = () => {
   // DOM References
@@ -13,6 +16,10 @@ const ChatbotInterface = () => {
   const chatInputRef = useRef(null);
   const sendButtonRef = useRef(null);
   const containerRef = useRef(null);
+  const messageContainerRef = useRef(null);
+  
+  // State for scroll visibility
+  const [showScroll, setShowScroll] = useState(false);
   
   // Internal state references (not React state)
   const sessionIdRef = useRef('');
@@ -44,6 +51,18 @@ const ChatbotInterface = () => {
     // Initialize event listeners
     initializeEventListeners();
     
+    // Set up scroll check
+    checkScrollNeeded();
+    
+    // Set up resize observer to check scroll when window resizes
+    const resizeObserver = new ResizeObserver(() => {
+      checkScrollNeeded();
+    });
+    
+    if (messageContainerRef.current) {
+      resizeObserver.observe(messageContainerRef.current);
+    }
+    
     // Cleanup function
     return () => {
       // Remove event listeners if needed
@@ -54,8 +73,22 @@ const ChatbotInterface = () => {
         chatInputRef.current.removeEventListener('keydown', handleKeyDown);
         chatInputRef.current.removeEventListener('input', handleInput);
       }
+      
+      // Disconnect resize observer
+      resizeObserver.disconnect();
     };
   }, []);
+  
+  // Check if scroll is needed
+  const checkScrollNeeded = () => {
+    if (messageContainerRef.current && chatMessagesRef.current) {
+      const containerHeight = messageContainerRef.current.clientHeight;
+      const contentHeight = chatMessagesRef.current.scrollHeight;
+      
+      // Only show scroll if content is taller than container
+      setShowScroll(contentHeight > containerHeight);
+    }
+  };
 
   // Set user initial from current user
   const setUserInitial = () => {
@@ -219,6 +252,9 @@ const ChatbotInterface = () => {
     chatMessagesRef.current.appendChild(messageDiv);
     scrollToBottom();
     
+    // Check if scroll is needed after adding message
+    setTimeout(checkScrollNeeded, 0);
+    
     return messageDiv;
   };
 
@@ -231,6 +267,9 @@ const ChatbotInterface = () => {
   const removeTypingIndicator = (messageElement) => {
     if (messageElement && messageElement.parentNode) {
       messageElement.parentNode.removeChild(messageElement);
+      
+      // Check if scroll is needed after removing typing indicator
+      setTimeout(checkScrollNeeded, 0);
     }
   };
 
@@ -244,10 +283,16 @@ const ChatbotInterface = () => {
     chatMessagesRef.current.appendChild(errorDiv);
     scrollToBottom();
     
+    // Check if scroll is needed after adding error
+    setTimeout(checkScrollNeeded, 0);
+    
     // Remove error message after 5 seconds
     setTimeout(() => {
       if (errorDiv.parentNode) {
         errorDiv.parentNode.removeChild(errorDiv);
+        
+        // Check if scroll is needed after removing error
+        setTimeout(checkScrollNeeded, 0);
       }
     }, 5000);
   };
@@ -273,6 +318,9 @@ const ChatbotInterface = () => {
     
     // Add welcome message
     addWelcomeMessage();
+    
+    // Check if scroll is needed after resetting conversation
+    setTimeout(checkScrollNeeded, 0);
   };
 
   // Send a message
@@ -400,14 +448,16 @@ const ChatbotInterface = () => {
       </div>
       
       {/* Scrollable Message Area - Scroll only appears when needed */}
-      <div className="w-full px-4 overflow-auto" 
-           style={{ 
-             paddingTop: "20px",
-             paddingBottom: "90px", // Adjust based on footer height
-             minHeight: "calc(100vh - 200px)", // Ensure minimum height for content
-             overflowY: "auto",
-             overflowX: "hidden"
-           }}>
+      <div 
+        ref={messageContainerRef}
+        className="w-full px-4" 
+        style={{ 
+          paddingTop: "20px",
+          paddingBottom: "90px", // Adjust based on footer height
+          minHeight: "calc(100vh - 200px)", // Ensure minimum height for content
+          overflowY: showScroll ? "auto" : "hidden",
+          overflowX: "hidden"
+        }}>
         <div ref={chatMessagesRef} className="space-y-4">
           {/* Messages will be added here dynamically */}
         </div>
