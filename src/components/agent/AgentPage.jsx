@@ -4,7 +4,7 @@ import ChatbotInterface from './ChatbotInterface';
 /**
  * AgentPage component for the LeadLines AI Agent section
  * Simplified version that only includes the ChatbotInterface
- * Updated to work with the fixed header/footer design
+ * Updated to work with the sticky header/footer design
  */
 const AgentPage = () => {
   return (

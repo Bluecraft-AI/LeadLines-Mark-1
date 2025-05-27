@@ -12,7 +12,7 @@ const ChatbotInterface = () => {
   const chatMessagesRef = useRef(null);
   const chatInputRef = useRef(null);
   const sendButtonRef = useRef(null);
-  const chatContainerRef = useRef(null);
+  const containerRef = useRef(null);
   
   // Internal state references (not React state)
   const sessionIdRef = useRef('');
@@ -140,7 +140,7 @@ const ChatbotInterface = () => {
   const autoResizeTextarea = () => {
     if (!chatInputRef.current) return;
     chatInputRef.current.style.height = 'auto';
-    chatInputRef.current.style.height = Math.min(chatInputRef.current.scrollHeight, 200) + 'px';
+    chatInputRef.current.style.height = Math.min(chatInputRef.current.scrollHeight, 80) + 'px';
   };
 
   // Update the send button state
@@ -382,9 +382,14 @@ const ChatbotInterface = () => {
   };
 
   return (
-    <div className="relative w-full h-full">
-      {/* Fixed Header Banner */}
-      <div className="fixed top-0 left-0 right-0 bg-white shadow-md z-10 px-4 py-3">
+    <div ref={containerRef} className="relative w-full h-full" style={{ position: 'relative' }}>
+      {/* Fixed Header Banner - Respects parent container boundaries */}
+      <div className="bg-white shadow-md z-10 px-4 py-3" 
+           style={{ 
+             position: 'sticky', 
+             top: 0, 
+             width: '100%'
+           }}>
         <h1 className="text-2xl font-semibold text-black mb-3">AI Agent</h1>
         <button 
           onClick={startNewConversation}
@@ -397,17 +402,22 @@ const ChatbotInterface = () => {
       {/* Scrollable Message Area */}
       <div className="w-full px-4" 
            style={{ 
-             paddingTop: "110px", // Adjust based on header height
+             paddingTop: "20px",
              paddingBottom: "90px", // Adjust based on footer height
-             minHeight: "100vh" 
+             minHeight: "calc(100vh - 200px)" // Ensure minimum height for content
            }}>
         <div ref={chatMessagesRef} className="space-y-4">
           {/* Messages will be added here dynamically */}
         </div>
       </div>
       
-      {/* Fixed Footer Banner */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-md z-10 p-4 border-t border-gray-200">
+      {/* Fixed Footer Banner - Respects parent container boundaries */}
+      <div className="bg-white shadow-md z-10 p-4 border-t border-gray-200" 
+           style={{ 
+             position: 'sticky', 
+             bottom: 0, 
+             width: '100%'
+           }}>
         <div className="relative">
           <textarea
             ref={chatInputRef}
