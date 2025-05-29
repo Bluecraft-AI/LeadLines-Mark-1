@@ -222,6 +222,73 @@ const ChatbotInterface = () => {
     addMessage('assistant', 'Hello! I\'m your chat assistant. How can I help you today?');
   };
 
+  // Convert Markdown links to HTML hyperlinks
+  const convertMarkdownLinksToHtml = (text) => {
+    // Handle non-string inputs
+    if (typeof text !== 'string') {
+      return text;
+    }
+    
+    // Convert Markdown links [text](url) to HTML <a> tags
+    const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let convertedText = text.replace(markdownLinkRegex, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>');
+    
+    // Convert **bold** text to HTML
+    convertedText = convertedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Convert line breaks to HTML
+    convertedText = convertedText.replace(/\n/g, '<br>');
+    
+    return convertedText;
+  };
+
+  // Format structured data (arrays/objects) into readable HTML
+  const formatStructuredData = (data) => {
+    if (Array.isArray(data)) {
+      // Handle array of news articles or similar structured data
+      // Convert to simple clickable text format instead of fancy cards
+      let text = '';
+      
+      data.forEach((item, index) => {
+        if (typeof item === 'object' && item.title && item.link) {
+          // Simple news article format - just clickable title with source info
+          text += `${index + 1}. [${item.title}](${item.link})`;
+          if (item.source) {
+            text += ` - ${item.source}`;
+            if (item.date) {
+              text += ` (${item.date})`;
+            }
+          }
+          text += '\n\n';
+        } else {
+          // Generic array item
+          text += `${index + 1}. ${typeof item === 'string' ? item : JSON.stringify(item)}\n\n`;
+        }
+      });
+      
+      // Convert the markdown-style text to HTML with clickable links
+      return convertMarkdownLinksToHtml(text.trim());
+    } else if (typeof data === 'object') {
+      // Handle single object
+      if (data.title && data.link) {
+        // Simple single article format
+        let text = `[${data.title}](${data.link})`;
+        if (data.source) {
+          text += ` - ${data.source}`;
+          if (data.date) {
+            text += ` (${data.date})`;
+          }
+        }
+        return convertMarkdownLinksToHtml(text);
+      } else {
+        // Generic object
+        return `<pre class="bg-gray-100 p-2 rounded text-sm overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>`;
+      }
+    }
+    
+    return String(data);
+  };
+
   // Add a message to the chat
   const addMessage = (sender, content, isTyping = false) => {
     if (!chatMessagesRef.current) return;
@@ -254,7 +321,24 @@ const ChatbotInterface = () => {
     } else {
       const textDiv = document.createElement('div');
       textDiv.className = 'whitespace-pre-wrap';
-      textDiv.textContent = content;
+      
+      // For assistant messages, handle different content types
+      if (sender === 'assistant') {
+        let htmlContent;
+        if (typeof content === 'string') {
+          htmlContent = convertMarkdownLinksToHtml(content);
+        } else {
+          // Handle structured data (arrays, objects)
+          htmlContent = formatStructuredData(content);
+        }
+        
+        // Use innerHTML to render HTML content properly
+        textDiv.innerHTML = htmlContent;
+      } else {
+        // For user messages, use textContent to prevent HTML injection
+        textDiv.textContent = content;
+      }
+      
       contentDiv.appendChild(textDiv);
     }
     
@@ -341,6 +425,96 @@ const ChatbotInterface = () => {
     setTimeout(checkScrollNeeded, 0);
   };
 
+  // Process API response with improved JSON handling
+  const processApiResponse = async (response) => {
+    try {
+      // Get the response text first
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+      
+      // Try to parse as JSON
+      let parsedData;
+      try {
+        parsedData = JSON.parse(responseText);
+        
+        // Handle array responses (like the n8n webhook format)
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          parsedData = parsedData[0]; // Use the first element
+        }
+        
+        // Check if it's in the expected format: {"response": "message"}
+        if (parsedData && typeof parsedData === 'object' && parsedData.response) {
+          return parsedData.response;
+        }
+        
+        // Handle nested JSON in output field (common in n8n responses)
+        if (parsedData && parsedData.output) {
+          // If output is a string, try to parse it as JSON
+          if (typeof parsedData.output === 'string') {
+            try {
+              const nestedData = JSON.parse(parsedData.output);
+              
+              // Check for response field (primary)
+              if (nestedData && nestedData.response) {
+                return nestedData.response;
+              }
+              
+              // Check for message field (backup for legacy responses)
+              if (nestedData && nestedData.message) {
+                return nestedData.message;
+              }
+              
+              // If nested JSON doesn't have expected fields, return as string
+              return typeof nestedData === 'string' ? nestedData : JSON.stringify(nestedData);
+              
+            } catch (nestedJsonError) {
+              console.log('Output field is not valid JSON, treating as plain text');
+              return parsedData.output; // Return as plain text
+            }
+          } else if (typeof parsedData.output === 'object') {
+            // If output is already an object
+            
+            // Check for response field (primary)
+            if (parsedData.output.response) {
+              return parsedData.output.response;
+            }
+            
+            // Check for message field (backup for legacy responses)
+            if (parsedData.output.message) {
+              return parsedData.output.message;
+            }
+            
+            // If no expected fields, return the object as string
+            return JSON.stringify(parsedData.output);
+          } else {
+            // If output is neither string nor object, return it as is
+            return String(parsedData.output);
+          }
+        }
+        
+        // Simple fallback for direct message fields
+        if (parsedData.message) {
+          return parsedData.message;
+        }
+        
+        // If no recognized structure, return the entire response as formatted JSON
+        return JSON.stringify(parsedData, null, 2);
+        
+      } catch (jsonError) {
+        // If JSON parsing fails, treat as plain text
+        console.log('JSON parsing failed, treating as plain text:', jsonError.message);
+        
+        // Return as plain text
+        const cleanedText = responseText.trim();
+        return cleanedText || 'I received your message, but the response was empty.';
+      }
+      
+    } catch (error) {
+      console.error('Error processing API response:', error);
+      return 'I received your message, but had trouble processing the response.';
+    }
+  };
+
   // Send a message
   const sendMessage = async () => {
     if (!chatInputRef.current) return;
@@ -397,33 +571,8 @@ const ChatbotInterface = () => {
         console.error('Error response:', errorText);
         botResponse = 'Sorry, I encountered an error processing your request. Please try again.';
       } else {
-        try {
-          // Parse response
-          const contentType = response.headers.get('content-type');
-          let data;
-          
-          if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-          } else {
-            data = await response.text();
-          }
-          
-          // Extract the response message
-          if (typeof data === 'string') {
-            botResponse = data;
-          } else if (data && typeof data === 'object') {
-            botResponse = data.output || 
-                        data.response || 
-                        data.message || 
-                        data.text || 
-                        data.reply || 
-                        data.result || 
-                        JSON.stringify(data);
-          }
-        } catch (parseError) {
-          console.error('Error parsing response:', parseError);
-          botResponse = 'I received your message, but had trouble understanding the response.';
-        }
+        // Process the response with improved JSON handling
+        botResponse = await processApiResponse(response);
       }
       
       // Add assistant response to chat
