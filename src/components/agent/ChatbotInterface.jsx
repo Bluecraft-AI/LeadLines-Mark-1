@@ -236,6 +236,12 @@ const ChatbotInterface = () => {
     // Convert **bold** text to HTML
     convertedText = convertedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     
+    // Convert _italic_ text to HTML
+    convertedText = convertedText.replace(/\_([^_]+)\_/g, '<em>$1</em>');
+    
+    // Convert *italic* text to HTML (alternative markdown syntax)
+    convertedText = convertedText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    
     // Convert line breaks to HTML
     convertedText = convertedText.replace(/\n/g, '<br>');
     
