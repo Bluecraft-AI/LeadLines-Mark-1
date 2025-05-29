@@ -229,15 +229,16 @@ const ChatbotInterface = () => {
       return text;
     }
     
-    // Convert Markdown links [text](url) to HTML <a> tags
-    const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let convertedText = text.replace(markdownLinkRegex, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>');
-    
+    // IMPORTANT: Process images BEFORE regular links to avoid conflicts
     // Convert ![alt](url) to clickable thumbnail images
     const markdownImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    convertedText = convertedText.replace(markdownImageRegex, 
+    let convertedText = text.replace(markdownImageRegex, 
       '<img src="$2" alt="$1" class="max-w-[150px] h-auto rounded cursor-pointer hover:opacity-80 transition-opacity my-2 block" onclick="window.open(\'$2\', \'_blank\')" title="Click to view full size" style="max-width: 150px; height: auto;" />'
     );
+    
+    // Convert Markdown links [text](url) to HTML <a> tags
+    const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    convertedText = convertedText.replace(markdownLinkRegex, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>');
     
     // Convert **bold** text to HTML
     convertedText = convertedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
