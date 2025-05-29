@@ -233,7 +233,7 @@ const ChatbotInterface = () => {
     // Convert ![alt](url) to clickable thumbnail images
     const markdownImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
     let convertedText = text.replace(markdownImageRegex, 
-      '<img src="$2" alt="$1" class="max-w-[150px] h-auto rounded cursor-pointer hover:opacity-80 transition-opacity my-2 block" onclick="window.open(\'$2\', \'_blank\')" title="Click to view full size" style="max-width: 150px; height: auto;" />'
+      '<img src="$2" alt="$1" class="max-w-[150px] h-auto rounded cursor-pointer hover:opacity-80 transition-opacity my-2 block" data-full-image="$2" title="Click to view full size" style="max-width: 150px; height: auto;" />'
     );
     
     // Convert Markdown links [text](url) to HTML <a> tags
@@ -347,6 +347,31 @@ const ChatbotInterface = () => {
         
         // Use innerHTML to render HTML content properly
         textDiv.innerHTML = htmlContent;
+        
+        // Add click handlers for images to enlarge them
+        const images = textDiv.querySelectorAll('img[data-full-image]');
+        images.forEach(img => {
+          img.addEventListener('click', (e) => {
+            e.preventDefault();
+            const fullImageUrl = img.getAttribute('data-full-image');
+            // Open image in new window/tab with proper sizing
+            const imageWindow = window.open('', '_blank');
+            imageWindow.document.write(`
+              <html>
+                <head>
+                  <title>Image Viewer</title>
+                  <style>
+                    body { margin: 0; padding: 20px; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                    img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+                  </style>
+                </head>
+                <body>
+                  <img src="${fullImageUrl}" alt="Full size image" />
+                </body>
+              </html>
+            `);
+          });
+        });
       } else {
         // For user messages, use textContent to prevent HTML injection
         textDiv.textContent = content;
