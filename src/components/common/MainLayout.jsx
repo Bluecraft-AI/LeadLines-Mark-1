@@ -63,7 +63,7 @@ const MainLayout = ({ children }) => {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Top Panel with LeadLines button positioned to align with sidebar */}
-      <header className="bg-secondary text-text-light p-4 pb-3 shadow-md relative">
+      <header className="bg-secondary text-text-light p-4 pb-3 relative">
         <div className="container mx-auto flex justify-between items-center">
           {showNav && (
             <>
