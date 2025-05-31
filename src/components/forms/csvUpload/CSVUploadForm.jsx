@@ -410,7 +410,7 @@ const CSVUploadForm = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-vertical"
                 placeholder="Describe your campaign angle, target audience, messaging approach, value propositions, etc..."
               />
-              <p className="text-xs text-gray-500 mt-1">Please be as descriptive as possible - the more details you provide, the better the AI can tailor your email sequences.</p>
+              <p className="text-xs text-gray-500 mt-1">Please be as descriptive as possible - the more details you provide, the better we can tailor your email sequences.</p>
             </div>
             
             <button 
