@@ -3,19 +3,42 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../../config/supabase';
 import SubmissionsService from '../../../services/SubmissionsService';
+import AssistantService from '../../../services/AssistantService';
 
 const CSVUploadForm = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [emailCount, setEmailCount] = useState('');
   const [submissionName, setSubmissionName] = useState('');
+  const [campaignAngle, setCampaignAngle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ text: '', type: '' });
+  const [assistantId, setAssistantId] = useState('');
   const fileInputRef = useRef(null);
   const fileDropAreaRef = useRef(null);
   const { currentUser } = useAuth();
   
   // Webhook URL - in a production app, this would be stored in environment variables
   const WEBHOOK_URL = "https://bluecraftleads.app.n8n.cloud/webhook/363e4379-80f1-49b0-8d2f-e5ad1bc61f85";
+
+  // Fetch the user's assistant ID in the background
+  useEffect(() => {
+    const fetchAssistantId = async () => {
+      try {
+        if (currentUser) {
+          const assistant = await AssistantService.getUserAssistant();
+          if (assistant && assistant.assistant_id) {
+            setAssistantId(assistant.assistant_id);
+            console.log('Fetched assistant ID for CSV upload:', assistant.assistant_id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching assistant ID:', err);
+        // Silently fail - don't show error to user
+      }
+    };
+
+    fetchAssistantId();
+  }, [currentUser]);
 
   // Handle drag and drop events
   useEffect(() => {
@@ -92,27 +115,22 @@ const CSVUploadForm = () => {
   const handleFiles = (files) => {
     if (files.length === 0) return;
     
-    // Filter for allowed file types and sizes
-    const newFiles = Array.from(files).filter(file => {
-      // Max file size: 10MB
-      if (file.size > 10 * 1024 * 1024) {
-        showStatusMessage(`File ${file.name} is too large. Maximum size is 10MB.`, 'error');
-        return false;
-      }
-      
-      // Check for CSV file type
-      if (!file.name.toLowerCase().endsWith('.csv')) {
-        showStatusMessage(`File ${file.name} is not a CSV file.`, 'error');
-        return false;
-      }
-      
-      return true;
-    });
+    // Only take the first file
+    const file = files[0];
     
-    if (newFiles.length === 0) return;
+    // Validate file
+    if (file.size > 10 * 1024 * 1024) {
+      showStatusMessage(`File ${file.name} is too large. Maximum size is 10MB.`, 'error');
+      return;
+    }
     
-    // Add new files to the array
-    setSelectedFiles(prev => [...prev, ...newFiles]);
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      showStatusMessage(`File ${file.name} is not a CSV file.`, 'error');
+      return;
+    }
+    
+    // Replace any existing file with the new one
+    setSelectedFiles([file]);
   };
 
   // Remove a file from the selection
@@ -153,6 +171,11 @@ const CSVUploadForm = () => {
       formData.append('user_id', currentUser.uid);
       formData.append('user_email', currentUser.email);
       
+      // Add assistant_id to the payload
+      if (assistantId) {
+        formData.append('assistant_id', assistantId);
+      }
+      
       // Add email count field if it has a value
       if (emailCount.trim()) {
         formData.append('number_of_emails', emailCount);
@@ -163,44 +186,48 @@ const CSVUploadForm = () => {
         formData.append('submission_name', submissionName);
       }
       
-      // Add files
-      for (let i = 0; i < selectedFiles.length; i++) {
-        formData.append('files', selectedFiles[i]);
-        formData.append('original_filename', selectedFiles[i].name);
-        
-        // Create submission record in Supabase
-        const { data, error } = await SubmissionsService.createSubmission({
-          id: submissionId,
-          user_id: currentUser.uid,
-          user_email: currentUser.email,
-          original_filename: selectedFiles[i].name,
-          custom_name: submissionName.trim() || selectedFiles[i].name, // Use submission name if provided, otherwise use filename
-          email_count: parseInt(emailCount) || 0
-          // notes field removed entirely as requested
-        });
-        
-        if (error) {
-          showStatusMessage('Error creating submission record. Please try again.', 'error');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Upload file to Supabase Storage - FIXED: Corrected argument order
-        const { error: uploadError } = await SubmissionsService.uploadFile(
-          submissionId,  // First parameter should be submissionId
-          selectedFiles[i]  // Second parameter should be the file
-        );
-        
-        if (uploadError) {
-          showStatusMessage('Error uploading file. Please try again.', 'error');
-          // Delete the submission record if file upload fails
-          await SubmissionsService.deleteSubmission(submissionId);
-          setIsSubmitting(false);
-          return;
-        }
+      // Add campaign angle field if it has content
+      if (campaignAngle.trim()) {
+        formData.append('campaign_angle', campaignAngle);
       }
       
-      // Send data to webhook with additional headers
+      // Add the single file
+      const file = selectedFiles[0];
+      formData.append('files', file);
+      formData.append('original_filename', file.name);
+      
+      // Create submission record in Supabase
+      const { data, error } = await SubmissionsService.createSubmission({
+        id: submissionId,
+        user_id: currentUser.uid,
+        user_email: currentUser.email,
+        original_filename: file.name,
+        custom_name: submissionName.trim() || file.name, // Use submission name if provided, otherwise use filename
+        email_count: parseInt(emailCount) || 0
+        // notes field removed entirely as requested
+      });
+      
+      if (error) {
+        showStatusMessage('Error creating submission record. Please try again.', 'error');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await SubmissionsService.uploadFile(
+        submissionId,  // First parameter should be submissionId
+        file  // Second parameter should be the file
+      );
+      
+      if (uploadError) {
+        showStatusMessage('Error uploading file. Please try again.', 'error');
+        // Delete the submission record if file upload fails
+        await SubmissionsService.deleteSubmission(submissionId);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Send data to webhook with additional headers including assistant_id
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         body: formData,
@@ -208,8 +235,17 @@ const CSVUploadForm = () => {
           'x-user-id': currentUser.uid,
           'x-user-email': currentUser.email,
           'x-submission-id': submissionId,
-          'x-original-filename': selectedFiles[0]?.name || ''
+          'x-original-filename': file.name,
+          'x-assistant-id': assistantId || ''
         }
+      });
+      
+      console.log('CSV Upload webhook payload sent:', {
+        submission_id: submissionId,
+        user_id: currentUser.uid,
+        assistant_id: assistantId,
+        filename: file.name,
+        campaign_angle: campaignAngle
       });
       
       if (response.ok) {
@@ -234,7 +270,7 @@ const CSVUploadForm = () => {
   // Validate form
   const validateForm = () => {
     if (selectedFiles.length === 0) {
-      showStatusMessage('Please select at least one CSV file.', 'error');
+      showStatusMessage('Please select a CSV file.', 'error');
       return false;
     }
     
@@ -251,6 +287,7 @@ const CSVUploadForm = () => {
     setSelectedFiles([]);
     setEmailCount('');
     setSubmissionName('');
+    setCampaignAngle('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -281,11 +318,11 @@ const CSVUploadForm = () => {
               {statusMessage.text}
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="fileUpload" className="block font-semibold mb-2 after:content-['*'] after:ml-0.5 after:text-red-500">
-                Files
+                CSV File
               </label>
               <div 
                 ref={fileDropAreaRef}
@@ -293,14 +330,13 @@ const CSVUploadForm = () => {
                 onClick={handleFileDropAreaClick}
               >
                 <div className="text-4xl mb-2">📂</div>
-                <p>Drag & drop files here or click to browse</p>
+                <p>Drag & drop your CSV file here or click to browse</p>
                 <p className="text-xs text-gray-500 mt-1">Maximum file size: 10MB</p>
                 <input 
                   type="file" 
                   id="fileUpload" 
                   ref={fileInputRef}
                   className="hidden"
-                  multiple 
                   accept=".csv"
                   onChange={handleFileChange}
                 />
@@ -362,6 +398,21 @@ const CSVUploadForm = () => {
               <p className="text-xs text-gray-500 mt-1">Optional: Add any name related to this submission for better organization.</p>
             </div>
             
+            <div>
+              <label htmlFor="campaignAngle" className="block font-semibold mb-2">
+                Campaign Angle
+              </label>
+              <textarea 
+                id="campaignAngle" 
+                value={campaignAngle}
+                onChange={(e) => setCampaignAngle(e.target.value)}
+                rows="4"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary resize-vertical"
+                placeholder="Describe your campaign angle, target audience, messaging approach, value propositions, etc..."
+              />
+              <p className="text-xs text-gray-500 mt-1">Please be as descriptive as possible - the more details you provide, the better the AI can tailor your email sequences.</p>
+            </div>
+            
             <button 
               type="submit" 
               className="w-full bg-secondary text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed"
@@ -372,7 +423,9 @@ const CSVUploadForm = () => {
                   <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 align-middle"></span>
                   <span>Submitting...</span>
                 </>
-              ) : 'Submit'}
+              ) : (
+                'Submit'
+              )}
             </button>
           </form>
         </div>
