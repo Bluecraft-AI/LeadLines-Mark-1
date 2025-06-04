@@ -13,6 +13,9 @@ export default {
         'text-dark': '#17273f',
         'text-light': '#fafafa',
       },
+      width: {
+        '22': '5.5rem', // 88px for collapsed sidebar
+      },
     },
   },
   plugins: [],
