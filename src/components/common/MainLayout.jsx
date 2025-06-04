@@ -9,7 +9,6 @@ const MainLayout = ({ children }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isExpanding, setIsExpanding] = useState(false);
-  const [isCollapsing, setIsCollapsing] = useState(false);
   const dropdownRef = useRef(null);
   const sidebarRef = useRef(null);
   
@@ -58,25 +57,9 @@ const MainLayout = ({ children }) => {
       sidebarRef.current?.addEventListener('transitionend', handleTransitionEnd);
       
     } else {
-      // Collapse
+      // Collapse: Icons appear instantly for snappy feel!
       setIsCollapsed(true);
-      setIsCollapsing(true);
-      
-      // Listen for width transition to complete
-      const handleCollapseTransitionEnd = (e) => {
-        if (e.propertyName === 'width') {
-          setIsCollapsing(false);
-          sidebarRef.current?.removeEventListener('transitionend', handleCollapseTransitionEnd);
-        }
-      };
-      sidebarRef.current?.addEventListener('transitionend', handleCollapseTransitionEnd);
-      
-      // Also show icons with slight early timing for better feel
-      setTimeout(() => {
-        if (isCollapsing) {
-          setIsCollapsing(false);
-        }
-      }, 350);
+      // No more setIsCollapsing or delays - icons show immediately
     }
   };
 
@@ -131,8 +114,8 @@ const MainLayout = ({ children }) => {
         <div className="container mx-auto flex justify-between items-center">
           {showNav && (
             <>
-              {/* LeadLines button positioned to align with sidebar */}
-              <div className={`absolute left-0 top-0 h-full flex items-center bg-secondary transition-all duration-300 ${isCollapsed ? 'w-22' : 'w-44'}`}>
+              {/* LeadLines button positioned to align with sidebar - FIXED WIDTH */}
+              <div className="absolute left-0 top-0 w-44 h-full flex items-center bg-secondary">
                 <Link 
                   to="/dashboard" 
                   className="text-2xl font-bold hover:text-accent transition-colors block px-4 py-2 text-center w-full"
@@ -141,8 +124,8 @@ const MainLayout = ({ children }) => {
                 </Link>
               </div>
               
-              {/* Empty div to maintain layout balance */}
-              <div className={`transition-all duration-300 ${isCollapsed ? 'w-22' : 'w-44'} invisible`}>
+              {/* Empty div to maintain layout balance - FIXED WIDTH */}
+              <div className="w-44 invisible">
                 {/* This space is intentionally left empty */}
               </div>
               
@@ -208,20 +191,16 @@ const MainLayout = ({ children }) => {
                       isCollapsed && !isExpanding 
                         ? 'w-10 h-10 mx-auto p-0 flex items-center justify-center' 
                         : 'py-2 px-4'
-                    } ${
-                      isCollapsing 
-                        ? 'w-10 h-10 mx-auto p-0 flex items-center justify-center' 
-                        : ''
                     }`}
                     style={{
-                      transition: isCollapsing || isExpanding ? 'none' : 'all 0.1s ease',
+                      transition: isExpanding ? 'none' : 'all 0.1s ease',
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <span className={`nav-text ${(isCollapsed && !isExpanding) || isCollapsing ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isExpanding ? 'opacity-0' : ''}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
+                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
                       Dashboard
                     </span>
-                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${(isCollapsed && !isCollapsing) ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isCollapsing ? 'opacity 0.1s ease-in' : 'none' }}>
+                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
                       <DashboardIcon fill={location.pathname === '/dashboard' ? '#17273f' : 'white'} />
                     </div>
                   </Link>
@@ -237,20 +216,16 @@ const MainLayout = ({ children }) => {
                       isCollapsed && !isExpanding 
                         ? 'w-10 h-10 mx-auto p-0 flex items-center justify-center' 
                         : 'py-2 px-4'
-                    } ${
-                      isCollapsing 
-                        ? 'w-10 h-10 mx-auto p-0 flex items-center justify-center' 
-                        : ''
                     }`}
                     style={{
-                      transition: isCollapsing || isExpanding ? 'none' : 'all 0.1s ease',
+                      transition: isExpanding ? 'none' : 'all 0.1s ease',
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <span className={`nav-text ${(isCollapsed && !isExpanding) || isCollapsing ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isExpanding ? 'opacity-0' : ''}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
+                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
                       CSV Upload
                     </span>
-                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${(isCollapsed && !isCollapsing) ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isCollapsing ? 'opacity 0.1s ease-in' : 'none' }}>
+                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
                       <UploadIcon fill={location.pathname.startsWith('/upload') ? '#17273f' : 'white'} />
                     </div>
                   </Link>
@@ -266,20 +241,16 @@ const MainLayout = ({ children }) => {
                       isCollapsed && !isExpanding 
                         ? 'w-10 h-10 mx-auto p-0 flex items-center justify-center' 
                         : 'py-2 px-4'
-                    } ${
-                      isCollapsing 
-                        ? 'w-10 h-10 mx-auto p-0 flex items-center justify-center' 
-                        : ''
                     }`}
                     style={{
-                      transition: isCollapsing || isExpanding ? 'none' : 'all 0.1s ease',
+                      transition: isExpanding ? 'none' : 'all 0.1s ease',
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <span className={`nav-text ${(isCollapsed && !isExpanding) || isCollapsing ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isExpanding ? 'opacity-0' : ''}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
+                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
                       Submissions
                     </span>
-                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${(isCollapsed && !isCollapsing) ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isCollapsing ? 'opacity 0.1s ease-in' : 'none' }}>
+                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
                       <SubmissionsIcon fill={location.pathname === '/submissions' ? '#17273f' : 'white'} />
                     </div>
                   </Link>
