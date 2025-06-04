@@ -200,7 +200,7 @@ const MainLayout = ({ children }) => {
                     <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: (isExpanding || isCollapsed) ? 'none' : 'opacity 0.15s ease-out' }}>
                       Dashboard
                     </span>
-                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
+                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'opacity 0.2s ease-in' : 'none' }}>
                       <DashboardIcon fill={location.pathname === '/dashboard' ? '#17273f' : 'white'} />
                     </div>
                   </Link>
@@ -225,7 +225,7 @@ const MainLayout = ({ children }) => {
                     <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: (isExpanding || isCollapsed) ? 'none' : 'opacity 0.15s ease-out' }}>
                       CSV Upload
                     </span>
-                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
+                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'opacity 0.2s ease-in' : 'none' }}>
                       <UploadIcon fill={location.pathname.startsWith('/upload') ? '#17273f' : 'white'} />
                     </div>
                   </Link>
@@ -250,7 +250,7 @@ const MainLayout = ({ children }) => {
                     <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: (isExpanding || isCollapsed) ? 'none' : 'opacity 0.15s ease-out' }}>
                       Submissions
                     </span>
-                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
+                    <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'opacity 0.2s ease-in' : 'none' }}>
                       <SubmissionsIcon fill={location.pathname === '/submissions' ? '#17273f' : 'white'} />
                     </div>
                   </Link>
