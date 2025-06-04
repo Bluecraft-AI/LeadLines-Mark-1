@@ -197,7 +197,7 @@ const MainLayout = ({ children }) => {
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
+                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: (isExpanding || isCollapsed) ? 'none' : 'opacity 0.15s ease-out' }}>
                       Dashboard
                     </span>
                     <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
@@ -222,7 +222,7 @@ const MainLayout = ({ children }) => {
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
+                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: (isExpanding || isCollapsed) ? 'none' : 'opacity 0.15s ease-out' }}>
                       CSV Upload
                     </span>
                     <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
@@ -247,7 +247,7 @@ const MainLayout = ({ children }) => {
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: isExpanding ? 'none' : 'opacity 0.15s ease-out' }}>
+                    <span className={`nav-text ${isCollapsed || isExpanding ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ transition: (isExpanding || isCollapsed) ? 'none' : 'opacity 0.15s ease-out' }}>
                       Submissions
                     </span>
                     <div className={`nav-icon absolute inset-0 flex items-center justify-center ${isCollapsed && !isExpanding ? 'opacity-100' : 'opacity-0'}`} style={{ transition: isCollapsed && !isExpanding ? 'none' : 'none' }}>
