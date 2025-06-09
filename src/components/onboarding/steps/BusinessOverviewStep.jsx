@@ -42,14 +42,36 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
     }
     
     // Validation
-    const requiredFields = ['businessDescription', 'primaryRevenue', 'businessModel'];
+    const requiredFields = [
+      'businessDescription', 
+      'coreProducts', 
+      'salesCycleLength',
+      'initialEngagementLength', 
+      'averageClientLifetime', 
+      'renewalOpportunities',
+      'problemsSolved', 
+      'clientTransformationBefore', 
+      'clientTransformationAfter', 
+      'timelineToResults', 
+      'primaryBenefit', 
+      'elevatorPitch'
+    ];
     const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
     
     if (missingFields.length > 0) {
       const fieldDisplayNames = {
-        'businessDescription': 'Business Description',
-        'primaryRevenue': 'Primary Revenue Source',
-        'businessModel': 'Business Model'
+        'businessDescription': 'Business Description (2-3 sentences)',
+        'coreProducts': 'Core Products/Services with Pricing',
+        'salesCycleLength': 'Average Sales Cycle Length',
+        'initialEngagementLength': 'Initial Engagement Length',
+        'averageClientLifetime': 'Average Client Lifetime',
+        'renewalOpportunities': 'Renewal/Upsell/Downsell Opportunities',
+        'problemsSolved': 'Problems You Solve for Clients',
+        'clientTransformationBefore': 'Client Transformation - Before State',
+        'clientTransformationAfter': 'Client Transformation - After State',
+        'timelineToResults': 'Timeline to Results',
+        'primaryBenefit': 'Primary Benefit to Clients',
+        'elevatorPitch': 'Elevator Pitch'
       };
       const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
       alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
