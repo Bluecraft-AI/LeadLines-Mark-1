@@ -28,6 +28,7 @@ const OnboardingForm = () => {
   const [isExpanding, setIsExpanding] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const sidebarRef = useRef(null);
+  const saveTimeoutRef = useRef(null);
 
   // Step configuration with shortened titles for sidebar
   const steps = [
@@ -151,6 +152,15 @@ const OnboardingForm = () => {
     checkOnboarding();
   }, [currentUser, navigate, checkOnboardingStatus]);
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Real-time update function for step data
   const updateStepData = (stepKey, updatedStepData) => {
     setFormData(prevFormData => {
@@ -159,8 +169,13 @@ const OnboardingForm = () => {
         [stepKey]: updatedStepData
       };
       
+      // Clear any existing save timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
       // Save immediately when step data changes
-      setTimeout(() => {
+      saveTimeoutRef.current = setTimeout(() => {
         if (currentUser) {
           try {
             localStorage.setItem('leadlines_onboarding_data', JSON.stringify(newFormData));
@@ -170,6 +185,7 @@ const OnboardingForm = () => {
             console.warn('Failed to save onboarding data:', error);
           }
         }
+        saveTimeoutRef.current = null;
       }, 100); // Debounce by 100ms
       
       return newFormData;
