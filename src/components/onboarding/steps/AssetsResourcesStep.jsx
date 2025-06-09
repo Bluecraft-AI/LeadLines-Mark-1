@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const AssetsResourcesStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const AssetsResourcesStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     marketingAssets: '',
     campaignHistory: '',
@@ -22,6 +22,12 @@ const AssetsResourcesStep = ({ onNext, onPrevious, formData, isFirstStep, isLast
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Clear any pending save operations before proceeding
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
+    
     onNext(stepData);
   };
 

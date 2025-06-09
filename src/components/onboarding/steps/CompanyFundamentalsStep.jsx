@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   // Initialize state with saved data or defaults
   const [stepData, setStepData] = useState(formData || {
     // Basic Information
@@ -41,6 +41,11 @@ const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, is
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
     
     // Define required fields based on the questionnaire
     const requiredFields = [

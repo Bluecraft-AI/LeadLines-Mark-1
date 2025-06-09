@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const SalesMarketingStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const SalesMarketingStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     guarantee: '',
     leadMagnets: '',
@@ -24,21 +24,32 @@ const SalesMarketingStep = ({ onNext, onPrevious, formData, isFirstStep, isLastS
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Define required fields based on the questionnaire
-    const requiredFields = ['guarantee', 'leadMagnets'];
-    const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
-    
-    if (missingFields.length > 0) {
-      const fieldDisplayNames = {
-        'guarantee': 'Guarantee or Risk Reversal',
-        'leadMagnets': 'Lead Magnet Offers'
-      };
-      
-      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
-      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
-      return;
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
     }
     
+    // Validation - require at least one marketing channel
+    const marketingChannels = [
+      'linkedinOutreach',
+      'coldEmail', 
+      'contentMarketing',
+      'paidAdvertising',
+      'referrals',
+      'networking',
+      'webinars',
+      'seo',
+      'socialMedia',
+      'other'
+    ];
+    
+    const hasMarketing = marketingChannels.some(channel => stepData[channel]);
+    
+    if (!hasMarketing) {
+      alert('Please select at least one marketing channel you use or want to use.');
+      return;
+    }
+
     onNext(stepData);
   };
 

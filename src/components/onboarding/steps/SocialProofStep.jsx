@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const SocialProofStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const SocialProofStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     caseStudies: '',
     awards: '',
@@ -23,6 +23,11 @@ const SocialProofStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
     
     // Define required fields based on the questionnaire
     const requiredFields = ['caseStudies'];

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const GoalsFinalStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, allFormData, updateStepData }) => {
+const GoalsFinalStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, allFormData, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     primaryGoal: '',
     secondaryGoals: '',
@@ -168,29 +168,32 @@ const GoalsFinalStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep,
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // First validate current step fields
-    const currentStepRequiredFields = ['primaryGoal', 'additionalInfo'];
-    const currentStepMissingFields = currentStepRequiredFields.filter(field => !stepData[field]?.trim());
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
     
-    if (currentStepMissingFields.length > 0) {
+    // Validation
+    const requiredFields = [
+      'primaryGoals',
+      'revenueGoals', 
+      'timelineExpectations'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
+    
+    if (missingFields.length > 0) {
       const fieldDisplayNames = {
-        'primaryGoal': 'Primary Goal for Campaigns',
-        'additionalInfo': 'Anything Else We Should Know'
+        'primaryGoals': 'Primary Goals',
+        'revenueGoals': 'Revenue Goals',
+        'timelineExpectations': 'Timeline Expectations'
       };
       
-      const missingFieldNames = currentStepMissingFields.map(field => fieldDisplayNames[field]);
-      alert(`Please fill in the following required fields on this step:\n\n• ${missingFieldNames.join('\n• ')}`);
+      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
       return;
     }
-    
-    // Then validate ALL required fields across the entire onboarding process
-    const allMissingFields = validateAllRequiredFields();
-    
-    if (allMissingFields.length > 0) {
-      alert(`Before completing your onboarding, please ensure all required fields are filled out.\n\nThe following required fields are missing:\n\n• ${allMissingFields.join('\n• ')}\n\nPlease go back to the previous steps and complete these fields before submitting.`);
-      return;
-    }
-    
+
     onNext(stepData);
   };
 

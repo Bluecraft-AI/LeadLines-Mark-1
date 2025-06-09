@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const CompetitiveLandscapeStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const CompetitiveLandscapeStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     competitors: '',
     uniqueDifferentiators: '',
@@ -22,6 +22,11 @@ const CompetitiveLandscapeStep = ({ onNext, onPrevious, formData, isFirstStep, i
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
     
     // Define required fields based on the questionnaire
     const requiredFields = [

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     idealClientDescription: '',
     industryVertical: '',
@@ -29,27 +29,34 @@ const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastSte
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Define required fields based on the questionnaire
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
+    
+    // Define required fields
     const requiredFields = [
-      'idealClientDescription',
-      'idealClientUrls', 
-      'targetJobTitles'
+      'idealClientTitle',
+      'idealClientIndustry', 
+      'idealClientCompanySize',
+      'targetMarketDescription'
     ];
     
     const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
     
     if (missingFields.length > 0) {
       const fieldDisplayNames = {
-        'idealClientDescription': 'Ideal Client Description',
-        'idealClientUrls': 'URLs of 5+ Ideal Clients',
-        'targetJobTitles': 'Target Job Titles'
+        'idealClientTitle': 'Ideal Client Title',
+        'idealClientIndustry': 'Ideal Client Industry',
+        'idealClientCompanySize': 'Ideal Client Company Size',
+        'targetMarketDescription': 'Target Market Description'
       };
       
       const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
       alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
       return;
     }
-    
+
     onNext(stepData);
   };
 

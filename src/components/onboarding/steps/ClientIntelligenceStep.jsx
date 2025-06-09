@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const ClientIntelligenceStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const ClientIntelligenceStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     painPoints: '',
     primaryGoals: '',
@@ -26,33 +26,25 @@ const ClientIntelligenceStep = ({ onNext, onPrevious, formData, isFirstStep, isL
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Define required fields based on the questionnaire
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
+    
+    // Validation
     const requiredFields = [
-      'painPoints',
-      'primaryGoals',
-      'triggers',
-      'competitorFrustrations', 
-      'prospectQuestions',
-      'objections'
+      'idealClientInterview1',
+      'idealClientInterview2',
+      'idealClientInterview3'
     ];
     
     const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
     
     if (missingFields.length > 0) {
-      const fieldDisplayNames = {
-        'painPoints': 'Top 3 Pain Points',
-        'primaryGoals': 'Primary Goals/Desires',
-        'triggers': 'Triggers to Seek Your Solution',
-        'competitorFrustrations': 'Frustrations with Competitors/Alternatives',
-        'prospectQuestions': 'Questions Prospects Would Respond To',
-        'objections': 'Top 3 Objections and Responses'
-      };
-      
-      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
-      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
+      alert('Please provide at least 3 ideal client URLs for analysis.');
       return;
     }
-    
+
     onNext(stepData);
   };
 

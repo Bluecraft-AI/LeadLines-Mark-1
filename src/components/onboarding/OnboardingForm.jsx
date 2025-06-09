@@ -192,6 +192,14 @@ const OnboardingForm = () => {
     });
   };
 
+  // Function to clear any pending save timeouts
+  const clearPendingSave = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+  };
+
   // Save progress when step changes or visitedSteps changes
   const saveProgressData = () => {
     if (currentUser) {
@@ -500,6 +508,7 @@ const OnboardingForm = () => {
                       loading={loading}
                       allFormData={currentStep === steps.length - 1 ? formData : undefined}
                       updateStepData={(updatedStepData) => updateStepData(steps[currentStep].key, updatedStepData)}
+                      clearPendingSave={clearPendingSave}
                     />
                   </div>
                 </div>

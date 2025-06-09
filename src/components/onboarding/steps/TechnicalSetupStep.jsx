@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const TechnicalSetupStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
+const TechnicalSetupStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData, clearPendingSave }) => {
   const [stepData, setStepData] = useState(formData || {
     emailSendingPlatform: '',
     emailHosting: '',
@@ -25,6 +25,11 @@ const TechnicalSetupStep = ({ onNext, onPrevious, formData, isFirstStep, isLastS
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Clear any pending save operations before validation
+    if (clearPendingSave) {
+      clearPendingSave();
+    }
     
     // Define required fields based on the questionnaire
     const requiredFields = [
