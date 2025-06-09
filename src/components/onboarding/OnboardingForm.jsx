@@ -143,6 +143,12 @@ const OnboardingForm = () => {
   const goToStep = (stepIndex) => {
     if (visitedSteps.has(stepIndex) && stepIndex >= 0) {
       setCurrentStep(stepIndex);
+      
+      // Save progress after step change
+      setTimeout(() => {
+        saveProgressData();
+      }, 200);
+      
       scrollToTop();
     }
   };
@@ -174,18 +180,53 @@ const OnboardingForm = () => {
 
   // Real-time update function for step data
   const updateStepData = (stepKey, updatedStepData) => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      [stepKey]: updatedStepData
-    }));
+    setFormData(prevFormData => {
+      const newFormData = {
+        ...prevFormData,
+        [stepKey]: updatedStepData
+      };
+      
+      // Save immediately when step data changes
+      setTimeout(() => {
+        if (currentUser) {
+          try {
+            console.log('💾 Saving data to localStorage...', {
+              formData: Object.keys(newFormData).length > 0 ? 'HAS_DATA' : 'EMPTY',
+              visitedSteps: visitedSteps.size,
+              currentStep
+            });
+            localStorage.setItem('leadlines_onboarding_data', JSON.stringify(newFormData));
+            localStorage.setItem('leadlines_onboarding_visited', JSON.stringify([...visitedSteps]));
+            localStorage.setItem('leadlines_onboarding_current_step', currentStep.toString());
+            console.log('✅ Data saved to localStorage successfully');
+          } catch (error) {
+            console.warn('❌ Failed to save onboarding data:', error);
+          }
+        }
+      }, 100); // Debounce by 100ms
+      
+      return newFormData;
+    });
   };
 
-  // Save progress whenever formData or visitedSteps changes
-  useEffect(() => {
+  // Save progress when step changes or visitedSteps changes
+  const saveProgressData = () => {
     if (currentUser) {
-      saveData();
+      try {
+        console.log('💾 Saving progress data...', {
+          formData: Object.keys(formData).length > 0 ? 'HAS_DATA' : 'EMPTY',
+          visitedSteps: visitedSteps.size,
+          currentStep
+        });
+        localStorage.setItem('leadlines_onboarding_data', JSON.stringify(formData));
+        localStorage.setItem('leadlines_onboarding_visited', JSON.stringify([...visitedSteps]));
+        localStorage.setItem('leadlines_onboarding_current_step', currentStep.toString());
+        console.log('✅ Progress data saved successfully');
+      } catch (error) {
+        console.warn('❌ Failed to save progress data:', error);
+      }
     }
-  }, [formData, visitedSteps, currentStep, currentUser]);
+  };
 
   const handleNext = (stepData) => {
     const stepKey = steps[currentStep].key;
@@ -204,6 +245,12 @@ const OnboardingForm = () => {
         newSet.add(currentStep + 1);
         return newSet;
       });
+      
+      // Save progress after updating step
+      setTimeout(() => {
+        saveProgressData();
+      }, 200);
+      
       scrollToTop();
     } else {
       // Final step - submit the form
