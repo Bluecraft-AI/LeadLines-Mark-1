@@ -156,6 +156,14 @@ const OnboardingForm = () => {
     checkOnboarding();
   }, [currentUser, navigate, checkOnboardingStatus]);
 
+  // Real-time update function for step data
+  const updateStepData = (stepKey, updatedStepData) => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      [stepKey]: updatedStepData
+    }));
+  };
+
   // Save progress whenever formData or visitedSteps changes
   useEffect(() => {
     if (currentUser) {
@@ -451,6 +459,7 @@ const OnboardingForm = () => {
                       isLastStep={currentStep === steps.length - 1}
                       loading={loading}
                       allFormData={currentStep === steps.length - 1 ? formData : undefined}
+                      updateStepData={(updatedStepData) => updateStepData(steps[currentStep].key, updatedStepData)}
                     />
                   </div>
                 </div>

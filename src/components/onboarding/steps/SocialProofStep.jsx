@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const SocialProofStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
+const SocialProofStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
   const [stepData, setStepData] = useState(formData || {
     caseStudies: '',
     awards: '',
@@ -8,6 +8,13 @@ const SocialProofStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep
     partnerships: '',
     clientFeedback: ''
   });
+
+  // Real-time save when stepData changes
+  useEffect(() => {
+    if (updateStepData) {
+      updateStepData(stepData);
+    }
+  }, [stepData, updateStepData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

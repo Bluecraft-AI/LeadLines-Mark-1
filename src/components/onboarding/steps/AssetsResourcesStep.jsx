@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const AssetsResourcesStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
+const AssetsResourcesStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
   const [stepData, setStepData] = useState(formData || {
     marketingAssets: '',
     campaignHistory: '',
     whatWorked: '',
     whatDidntWork: ''
   });
+
+  // Real-time save when stepData changes
+  useEffect(() => {
+    if (updateStepData) {
+      updateStepData(stepData);
+    }
+  }, [stepData, updateStepData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
+const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
   // Initialize state with saved data or defaults
   const [stepData, setStepData] = useState(formData || {
     // Basic Information
@@ -23,6 +23,13 @@ const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, is
     socialMediaProfiles: '',
     additionalPages: ''
   });
+
+  // Real-time save when stepData changes
+  useEffect(() => {
+    if (updateStepData) {
+      updateStepData(stepData);
+    }
+  }, [stepData, updateStepData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

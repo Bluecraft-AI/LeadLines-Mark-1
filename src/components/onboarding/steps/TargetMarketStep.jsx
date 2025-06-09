@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
+const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
   const [stepData, setStepData] = useState(formData || {
     idealClientDescription: '',
     industryVertical: '',
@@ -13,6 +13,13 @@ const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastSte
     targetJobTitles: '',
     secondaryInfluencers: ''
   });
+
+  // Real-time save when stepData changes
+  useEffect(() => {
+    if (updateStepData) {
+      updateStepData(stepData);
+    }
+  }, [stepData, updateStepData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

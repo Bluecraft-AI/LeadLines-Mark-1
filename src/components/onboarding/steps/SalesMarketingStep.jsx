@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const SalesMarketingStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
+const SalesMarketingStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
   const [stepData, setStepData] = useState(formData || {
     guarantee: '',
     leadMagnets: '',
@@ -8,6 +8,13 @@ const SalesMarketingStep = ({ onNext, onPrevious, formData, isFirstStep, isLastS
     avoidTerms: '',
     coreMessages: ''
   });
+
+  // Real-time save when stepData changes
+  useEffect(() => {
+    if (updateStepData) {
+      updateStepData(stepData);
+    }
+  }, [stepData, updateStepData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

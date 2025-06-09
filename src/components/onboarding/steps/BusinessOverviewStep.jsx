@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
+const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep, updateStepData }) => {
   const [stepData, setStepData] = useState(formData || {
     businessMission: '',
     businessDescription: '',
@@ -17,6 +17,13 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
     primaryBenefit: '',
     elevatorPitch: ''
   });
+
+  // Real-time save when stepData changes
+  useEffect(() => {
+    if (updateStepData) {
+      updateStepData(stepData);
+    }
+  }, [stepData, updateStepData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
