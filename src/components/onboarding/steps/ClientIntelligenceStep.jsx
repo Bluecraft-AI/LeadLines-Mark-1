@@ -33,15 +33,28 @@ const ClientIntelligenceStep = ({ onNext, onPrevious, formData, isFirstStep, isL
     
     // Validation
     const requiredFields = [
-      'idealClientInterview1',
-      'idealClientInterview2',
-      'idealClientInterview3'
+      'painPoints',
+      'primaryGoals',
+      'triggers',
+      'competitorFrustrations', 
+      'prospectQuestions',
+      'objections'
     ];
     
     const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
     
     if (missingFields.length > 0) {
-      alert('Please provide at least 3 ideal client URLs for analysis.');
+      const fieldDisplayNames = {
+        'painPoints': 'Top 3 Pain Points',
+        'primaryGoals': 'Primary Goals/Desires',
+        'triggers': 'Triggers to Seek Your Solution',
+        'competitorFrustrations': 'Frustrations with Competitors/Alternatives',
+        'prospectQuestions': 'Questions Prospects Would Respond To',
+        'objections': 'Top 3 Objections and Responses'
+      };
+      
+      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
       return;
     }
 
