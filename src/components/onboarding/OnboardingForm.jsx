@@ -75,23 +75,6 @@ const OnboardingForm = () => {
     }
   };
 
-  // Save data to localStorage
-  const saveData = () => {
-    try {
-      console.log('💾 Saving data to localStorage...', {
-        formData: Object.keys(formData).length > 0 ? 'HAS_DATA' : 'EMPTY',
-        visitedSteps: visitedSteps.size,
-        currentStep
-      });
-      localStorage.setItem('leadlines_onboarding_data', JSON.stringify(formData));
-      localStorage.setItem('leadlines_onboarding_visited', JSON.stringify([...visitedSteps]));
-      localStorage.setItem('leadlines_onboarding_current_step', currentStep.toString());
-      console.log('✅ Data saved to localStorage successfully');
-    } catch (error) {
-      console.warn('❌ Failed to save onboarding data:', error);
-    }
-  };
-
   // Update visited steps
   const updateVisitedSteps = () => {
     setVisitedSteps(prev => {
