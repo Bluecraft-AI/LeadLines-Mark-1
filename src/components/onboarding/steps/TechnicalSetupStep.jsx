@@ -188,18 +188,18 @@ const TechnicalSetupStep = ({ onNext, onPrevious, formData, isFirstStep, isLastS
                   type="checkbox"
                   name="helpNeeded"
                   value={item}
-                  checked={stepData.helpNeeded.includes(item)}
+                  checked={stepData.helpNeeded ? stepData.helpNeeded.includes(item) : false}
                   onChange={(e) => {
                     const { value, checked } = e.target;
                     if (checked) {
                       setStepData(prev => ({
                         ...prev,
-                        helpNeeded: [...(prev.helpNeeded.split(', ').filter(Boolean)), value].join(', ')
+                        helpNeeded: [...((prev.helpNeeded || '').split(', ').filter(Boolean)), value].join(', ')
                       }));
                     } else {
                       setStepData(prev => ({
                         ...prev,
-                        helpNeeded: prev.helpNeeded.split(', ').filter(item => item !== value).join(', ')
+                        helpNeeded: (prev.helpNeeded || '').split(', ').filter(item => item !== value).join(', ')
                       }));
                     }
                   }}
