@@ -16,6 +16,21 @@ const SocialProofStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Define required fields based on the questionnaire
+    const requiredFields = ['caseStudies'];
+    const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
+    
+    if (missingFields.length > 0) {
+      const fieldDisplayNames = {
+        'caseStudies': 'Case Studies and Positive Results (2-3 examples)'
+      };
+      
+      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
+      return;
+    }
+    
     onNext(stepData);
   };
 

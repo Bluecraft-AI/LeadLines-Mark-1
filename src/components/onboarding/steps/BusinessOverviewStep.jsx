@@ -28,6 +28,46 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Define required fields based on the questionnaire
+    const requiredFields = [
+      'businessDescription',
+      'coreProducts', 
+      'salesCycleLength',
+      'initialEngagementLength',
+      'averageClientLifetime',
+      'renewalOpportunities',
+      'problemsSolved',
+      'clientTransformationBefore',
+      'clientTransformationAfter',
+      'timelineToResults',
+      'primaryBenefit',
+      'elevatorPitch'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
+    
+    if (missingFields.length > 0) {
+      const fieldDisplayNames = {
+        'businessDescription': 'Business Description (2-3 sentences)',
+        'coreProducts': 'Core Products/Services with Pricing',
+        'salesCycleLength': 'Average Sales Cycle Length',
+        'initialEngagementLength': 'Initial Engagement Length',
+        'averageClientLifetime': 'Average Client Lifetime',
+        'renewalOpportunities': 'Renewal/Upsell/Downsell Opportunities',
+        'problemsSolved': 'Problems You Solve for Clients',
+        'clientTransformationBefore': 'Client Transformation - Before State',
+        'clientTransformationAfter': 'Client Transformation - After State',
+        'timelineToResults': 'Timeline to Results',
+        'primaryBenefit': 'Primary Benefit to Clients',
+        'elevatorPitch': 'Elevator Pitch'
+      };
+      
+      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
+      return;
+    }
+    
     onNext(stepData);
   };
 
@@ -48,6 +88,7 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
             value={stepData.businessMission}
             onChange={handleChange}
             rows={3}
+            placeholder="What is your company's mission and vision?"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
           />
         </div>
@@ -62,6 +103,7 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
             value={stepData.businessDescription}
             onChange={handleChange}
             rows={4}
+            placeholder="What does your company do? Who do you serve? What makes you unique?"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
             required
           />
@@ -86,8 +128,9 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
 
       <div className="space-y-6">
         <h3 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">
-          Client Engagement Timeline
+          Client Engagement Timeline *
         </h3>
+        <p className="text-sm text-gray-600 mb-4">All fields in this section are required</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -132,7 +175,7 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
               name="averageClientLifetime"
               value={stepData.averageClientLifetime}
               onChange={handleChange}
-              placeholder="e.g., 2 years, 5 years"
+              placeholder="e.g., 2 years, 18 months"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             />
@@ -148,7 +191,7 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
               name="renewalOpportunities"
               value={stepData.renewalOpportunities}
               onChange={handleChange}
-              placeholder="Describe opportunities"
+              placeholder="e.g., Annual renewals, quarterly upsells"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             />
@@ -171,55 +214,65 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
             value={stepData.problemsSolved}
             onChange={handleChange}
             rows={4}
+            placeholder="What specific challenges or pain points do you address?"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
             required
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label htmlFor="clientTransformationBefore" className="block text-sm font-medium text-gray-700 mb-2">
-              Before state *
-            </label>
-            <textarea
-              id="clientTransformationBefore"
-              name="clientTransformationBefore"
-              value={stepData.clientTransformationBefore}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              required
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="clientTransformationAfter" className="block text-sm font-medium text-gray-700 mb-2">
-              After state *
-            </label>
-            <textarea
-              id="clientTransformationAfter"
-              name="clientTransformationAfter"
-              value={stepData.clientTransformationAfter}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              required
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="timelineToResults" className="block text-sm font-medium text-gray-700 mb-2">
-              Timeline to results *
-            </label>
-            <textarea
-              id="timelineToResults"
-              name="timelineToResults"
-              value={stepData.timelineToResults}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              required
-            />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            What transformation do clients experience? *
+          </label>
+          <p className="text-sm text-gray-600 mb-4">All fields in this section are required</p>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="clientTransformationBefore" className="block text-sm font-medium text-gray-600 mb-1">
+                Before state: *
+              </label>
+              <textarea
+                id="clientTransformationBefore"
+                name="clientTransformationBefore"
+                value={stepData.clientTransformationBefore}
+                onChange={handleChange}
+                rows={2}
+                placeholder="What situation are clients in before working with you?"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="clientTransformationAfter" className="block text-sm font-medium text-gray-600 mb-1">
+                After state: *
+              </label>
+              <textarea
+                id="clientTransformationAfter"
+                name="clientTransformationAfter"
+                value={stepData.clientTransformationAfter}
+                onChange={handleChange}
+                rows={2}
+                placeholder="What improved situation do they achieve?"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="timelineToResults" className="block text-sm font-medium text-gray-600 mb-1">
+                Timeline to results: *
+              </label>
+              <input
+                type="text"
+                id="timelineToResults"
+                name="timelineToResults"
+                value={stepData.timelineToResults}
+                onChange={handleChange}
+                placeholder="e.g., 30 days, 3 months, 6 months"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+            </div>
           </div>
         </div>
         
@@ -232,7 +285,8 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
             name="primaryBenefit"
             value={stepData.primaryBenefit}
             onChange={handleChange}
-            rows={4}
+            rows={3}
+            placeholder="What is the main value or benefit clients receive?"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
             required
           />
@@ -247,7 +301,8 @@ const BusinessOverviewStep = ({ onNext, onPrevious, formData, isFirstStep, isLas
             name="elevatorPitch"
             value={stepData.elevatorPitch}
             onChange={handleChange}
-            rows={5}
+            rows={4}
+            placeholder="How would you quickly describe your business and value proposition in 60 seconds?"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
             required
           />

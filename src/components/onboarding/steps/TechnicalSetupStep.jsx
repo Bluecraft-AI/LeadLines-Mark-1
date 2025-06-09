@@ -18,7 +18,49 @@ const TechnicalSetupStep = ({ onNext, onPrevious, formData, isFirstStep, isLastS
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Define required fields based on the questionnaire
+    const requiredFields = [
+      'emailSendingPlatform',
+      'emailHosting', 
+      'leadDataSource',
+      'clayUsage',
+      'automationTools',
+      'helpNeeded'
+    ];
+    
+    const missingFields = [];
+    
+    requiredFields.forEach(field => {
+      if (field === 'helpNeeded') {
+        // For helpNeeded, we need at least one checkbox selected
+        if (!stepData.helpNeeded || stepData.helpNeeded.trim() === '') {
+          missingFields.push('Help Needed (select at least one option)');
+        }
+      } else {
+        if (!stepData[field]?.trim()) {
+          missingFields.push(getFieldDisplayName(field));
+        }
+      }
+    });
+    
+    if (missingFields.length > 0) {
+      alert(`Please fill in the following required fields:\n\n• ${missingFields.join('\n• ')}`);
+      return;
+    }
+    
     onNext(stepData);
+  };
+
+  const getFieldDisplayName = (fieldName) => {
+    const displayNames = {
+      'emailSendingPlatform': 'Cold Email Sending Platform',
+      'emailHosting': 'Email Hosting Provider',
+      'leadDataSource': 'Lead Data Source',
+      'clayUsage': 'Clay.com Usage',
+      'automationTools': 'Marketing Automation Tools'
+    };
+    return displayNames[fieldName] || fieldName;
   };
 
   return (

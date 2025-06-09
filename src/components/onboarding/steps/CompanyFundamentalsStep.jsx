@@ -35,12 +35,34 @@ const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, is
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Basic validation for required fields
-    const requiredFields = ['companyName', 'websiteUrl', 'businessAddress', 'industry', 'contactName', 'contactTitle', 'contactPhone', 'contactEmail'];
+    // Define required fields based on the questionnaire
+    const requiredFields = [
+      'companyName', 
+      'websiteUrl', 
+      'businessAddress', 
+      'industry', 
+      'contactName', 
+      'contactTitle', 
+      'contactPhone', 
+      'contactEmail'
+    ];
+    
     const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
     
     if (missingFields.length > 0) {
-      alert('Please fill in all required fields marked with *');
+      const fieldDisplayNames = {
+        'companyName': 'Company Name',
+        'websiteUrl': 'Website URL',
+        'businessAddress': 'Primary Business Address',
+        'industry': 'Industry/Vertical',
+        'contactName': 'Primary Contact Name',
+        'contactTitle': 'Primary Contact Title',
+        'contactPhone': 'Best Phone Number',
+        'contactEmail': 'Best Email Address'
+      };
+      
+      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
       return;
     }
     
@@ -259,8 +281,8 @@ const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, is
             name="teamLinkedinUrls"
             value={stepData.teamLinkedinUrls}
             onChange={handleChange}
-            rows={3}
-            placeholder="One URL per line"
+            rows={4}
+            placeholder="CEO: https://linkedin.com/in/ceo-name&#10;CTO: https://linkedin.com/in/cto-name&#10;VP Sales: https://linkedin.com/in/vp-name"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
           />
         </div>
@@ -275,14 +297,14 @@ const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, is
             value={stepData.socialMediaProfiles}
             onChange={handleChange}
             rows={3}
-            placeholder="Twitter, Facebook, Instagram, etc."
+            placeholder="Twitter: @yourcompany&#10;Facebook: facebook.com/yourcompany&#10;Instagram: @yourcompany"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
           />
         </div>
         
         <div>
           <label htmlFor="additionalPages" className="block text-sm font-medium text-gray-700 mb-2">
-            Additional Landing Pages or Microsites
+            Any Additional Landing Pages or Microsites
           </label>
           <textarea
             id="additionalPages"
@@ -290,7 +312,7 @@ const CompanyFundamentalsStep = ({ onNext, onPrevious, formData, isFirstStep, is
             value={stepData.additionalPages}
             onChange={handleChange}
             rows={3}
-            placeholder="One URL per line"
+            placeholder="Product-specific landing pages, campaign sites, etc."
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
           />
         </div>

@@ -21,6 +21,28 @@ const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastSte
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Define required fields based on the questionnaire
+    const requiredFields = [
+      'idealClientDescription',
+      'idealClientUrls', 
+      'targetJobTitles'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
+    
+    if (missingFields.length > 0) {
+      const fieldDisplayNames = {
+        'idealClientDescription': 'Ideal Client Description',
+        'idealClientUrls': 'URLs of 5+ Ideal Clients',
+        'targetJobTitles': 'Target Job Titles'
+      };
+      
+      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
+      return;
+    }
+    
     onNext(stepData);
   };
 

@@ -15,6 +15,26 @@ const CompetitiveLandscapeStep = ({ onNext, onPrevious, formData, isFirstStep, i
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Define required fields based on the questionnaire
+    const requiredFields = [
+      'competitors',
+      'uniqueDifferentiators'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
+    
+    if (missingFields.length > 0) {
+      const fieldDisplayNames = {
+        'competitors': 'Top 3-5 Competitors with Website Links',
+        'uniqueDifferentiators': 'What Makes Your Company Unique'
+      };
+      
+      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
+      return;
+    }
+    
     onNext(stepData);
   };
 
