@@ -36,20 +36,18 @@ const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastSte
     
     // Define required fields
     const requiredFields = [
-      'idealClientTitle',
-      'idealClientIndustry', 
-      'idealClientCompanySize',
-      'targetMarketDescription'
+      'idealClientDescription',
+      'idealClientUrls', 
+      'targetJobTitles'
     ];
     
     const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
     
     if (missingFields.length > 0) {
       const fieldDisplayNames = {
-        'idealClientTitle': 'Ideal Client Title',
-        'idealClientIndustry': 'Ideal Client Industry',
-        'idealClientCompanySize': 'Ideal Client Company Size',
-        'targetMarketDescription': 'Target Market Description'
+        'idealClientDescription': 'Ideal Client Description',
+        'idealClientUrls': 'URLs of 5+ Ideal Clients',
+        'targetJobTitles': 'Target Job Titles'
       };
       
       const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
