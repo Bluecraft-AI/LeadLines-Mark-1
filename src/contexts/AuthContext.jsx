@@ -58,7 +58,8 @@ export const AuthProvider = ({ children }) => {
           email: user.email,
           full_name: 'New User',
           company: 'Your Company',
-          role: 'Your Role'
+          role: 'Your Role',
+          onboarding_completed: false
         });
         
         // Create user settings record in Supabase user_settings table
@@ -124,7 +125,8 @@ export const AuthProvider = ({ children }) => {
             email: user.email,
             full_name: 'New User',
             company: 'Your Company',
-            role: 'Your Role'
+            role: 'Your Role',
+            onboarding_completed: false
           });
           
           await supabase.from('user_settings').insert({
@@ -150,6 +152,51 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Error signing in:", error);
       throw error;
+    }
+  };
+
+  // Function to check if user has completed onboarding
+  const checkOnboardingStatus = async (user) => {
+    if (!user) return false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('onboarding_completed')
+        .eq('firebase_uid', user.uid)
+        .single();
+      
+      if (error) {
+        console.error('Error checking onboarding status:', error);
+        return false;
+      }
+      
+      return data?.onboarding_completed || false;
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      return false;
+    }
+  };
+
+  // Function to mark onboarding as completed
+  const completeOnboarding = async (user) => {
+    if (!user) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ onboarding_completed: true })
+        .eq('firebase_uid', user.uid);
+      
+      if (error) {
+        console.error('Error completing onboarding:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      return false;
     }
   };
 
@@ -201,26 +248,21 @@ export const AuthProvider = ({ children }) => {
     setUserSettings(updatedSettings);
     localStorage.setItem(`user_settings_${currentUser.uid}`, JSON.stringify(updatedSettings));
     
-    // Also update Supabase user_settings
-    try {
-      supabase
-        .from('user_settings')
-        .update({
-          integrations: settings.integrations,
-          updated_at: new Date()
-        })
-        .eq('firebase_uid', currentUser.uid)
-        .then(({ error }) => {
-          if (error) {
-            console.error("Error updating user settings in Supabase:", error);
-          }
-        });
-    } catch (error) {
-      console.error("Error in updateUserSettings:", error);
-    }
+    // Update Supabase
+    supabase
+      .from('user_settings')
+      .update({
+        integrations: settings.integrations || {}
+      })
+      .eq('firebase_uid', currentUser.uid)
+      .then(({ error }) => {
+        if (error) {
+          console.error('Error updating user settings in Supabase:', error);
+        }
+      });
   };
 
-  // Get current user settings
+  // Get user settings
   const getUserSettings = () => {
     if (!currentUser || !userSettings[currentUser.uid]) return null;
     return userSettings[currentUser.uid];
@@ -277,7 +319,9 @@ export const AuthProvider = ({ children }) => {
     updatePassword,
     loading,
     updateUserSettings,
-    getUserSettings
+    getUserSettings,
+    checkOnboardingStatus,
+    completeOnboarding
   };
 
   return (

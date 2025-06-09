@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Layout Components
@@ -16,16 +16,56 @@ import CalendarEmbed from './components/calendar/CalendarEmbed';
 import SubmissionsPage from './components/submissions/SubmissionsPage';
 import UploadPage from './components/upload/UploadPage';
 import AgentPage from './components/agent/AgentPage';
+import OnboardingForm from './components/onboarding/OnboardingForm';
 
 // Context Providers
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, checkOnboardingStatus } = useAuth();
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (!currentUser) {
+        setCheckingOnboarding(false);
+        return;
+      }
+      
+      try {
+        const completed = await checkOnboardingStatus(currentUser);
+        setOnboardingCompleted(completed);
+        
+        // If onboarding not completed and not already on onboarding page, redirect
+        if (!completed && window.location.pathname !== '/onboarding') {
+          window.location.href = '/onboarding';
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+      } finally {
+        setCheckingOnboarding(false);
+      }
+    };
+    
+    checkOnboarding();
+  }, [currentUser, checkOnboardingStatus]);
   
   if (!currentUser) {
     return <Navigate to="/login" replace />;
+  }
+  
+  if (checkingOnboarding) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
   
   return children;
@@ -38,6 +78,9 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
       <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
+      
+      {/* Onboarding Route - Special handling, no MainLayout */}
+      <Route path="/onboarding" element={<OnboardingForm />} />
       
       {/* Protected Routes */}
       <Route 

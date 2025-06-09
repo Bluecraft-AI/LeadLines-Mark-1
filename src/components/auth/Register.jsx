@@ -47,7 +47,8 @@ const Register = () => {
       setError('');
       setLoading(true);
       await signup(values.email, values.password);
-      navigate('/dashboard');
+      // Redirect to onboarding instead of dashboard for new users
+      navigate('/onboarding');
     } catch (err) {
       setError('Failed to create an account. Please try again.');
       console.error(err);
