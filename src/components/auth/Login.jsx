@@ -7,15 +7,29 @@ import { useAuth } from '../../contexts/AuthContext';
 const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, currentUser } = useAuth();
+  const { login, currentUser, checkOnboardingStatus } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if user is already logged in
   useEffect(() => {
-    if (currentUser) {
-      navigate('/dashboard');
-    }
-  }, [currentUser, navigate]);
+    const handleLoggedInUser = async () => {
+      if (currentUser) {
+        try {
+          const onboardingCompleted = await checkOnboardingStatus(currentUser);
+          if (onboardingCompleted) {
+            navigate('/dashboard');
+          } else {
+            navigate('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          navigate('/dashboard'); // Fallback to dashboard if error
+        }
+      }
+    };
+    
+    handleLoggedInUser();
+  }, [currentUser, navigate, checkOnboardingStatus]);
 
   // Validation schema
   const validationSchema = Yup.object({
@@ -38,8 +52,20 @@ const Login = () => {
     try {
       setError('');
       setLoading(true);
-      await login(values.email, values.password);
-      navigate('/dashboard');
+      const user = await login(values.email, values.password);
+      
+      // Check onboarding status and redirect appropriately
+      try {
+        const onboardingCompleted = await checkOnboardingStatus(user);
+        if (onboardingCompleted) {
+          navigate('/dashboard');
+        } else {
+          navigate('/onboarding');
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        navigate('/dashboard'); // Fallback to dashboard if error
+      }
     } catch (err) {
       setError('Failed to log in. Please check your credentials.');
       console.error(err);

@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const MainLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, checkOnboardingStatus } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isExpanding, setIsExpanding] = useState(false);
@@ -20,12 +20,26 @@ const MainLayout = ({ children }) => {
   // Only show navigation if user is logged in
   const showNav = currentUser;
 
-  // Redirect logged-in users from login/register pages to dashboard
+  // Redirect logged-in users from login/register pages based on onboarding status
   useEffect(() => {
-    if (currentUser && (isLoginPage || isRegisterPage)) {
-      navigate('/dashboard');
-    }
-  }, [currentUser, isLoginPage, isRegisterPage, navigate]);
+    const handleLoggedInUserRedirect = async () => {
+      if (currentUser && (isLoginPage || isRegisterPage)) {
+        try {
+          const onboardingCompleted = await checkOnboardingStatus(currentUser);
+          if (onboardingCompleted) {
+            navigate('/dashboard');
+          } else {
+            navigate('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          navigate('/dashboard'); // Fallback to dashboard if error
+        }
+      }
+    };
+    
+    handleLoggedInUserRedirect();
+  }, [currentUser, isLoginPage, isRegisterPage, navigate, checkOnboardingStatus]);
 
   // Get user's first initial for the profile circle
   const getUserInitial = () => {

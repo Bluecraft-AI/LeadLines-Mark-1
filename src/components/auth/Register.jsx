@@ -7,15 +7,29 @@ import { useAuth } from '../../contexts/AuthContext';
 const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup, currentUser } = useAuth();
+  const { signup, currentUser, checkOnboardingStatus } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if user is already logged in
   useEffect(() => {
-    if (currentUser) {
-      navigate('/dashboard');
-    }
-  }, [currentUser, navigate]);
+    const handleLoggedInUser = async () => {
+      if (currentUser) {
+        try {
+          const onboardingCompleted = await checkOnboardingStatus(currentUser);
+          if (onboardingCompleted) {
+            navigate('/dashboard');
+          } else {
+            navigate('/onboarding');
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          navigate('/dashboard'); // Fallback to dashboard if error
+        }
+      }
+    };
+    
+    handleLoggedInUser();
+  }, [currentUser, navigate, checkOnboardingStatus]);
 
   // Validation schema
   const validationSchema = Yup.object({
