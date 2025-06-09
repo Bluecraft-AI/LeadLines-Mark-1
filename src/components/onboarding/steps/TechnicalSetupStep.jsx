@@ -57,7 +57,10 @@ const TechnicalSetupStep = ({ onNext, onPrevious, formData, isFirstStep, isLastS
     });
     
     if (missingFields.length > 0) {
-      alert(`Please fill in the following required fields:\n\n• ${missingFields.join('\n• ')}`);
+      // Add extra delay for Technical Setup due to complex checkbox logic
+      setTimeout(() => {
+        alert(`Please fill in the following required fields:\n\n• ${missingFields.join('\n• ')}`);
+      }, 50);
       return;
     }
     
