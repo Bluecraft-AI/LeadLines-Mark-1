@@ -47,31 +47,21 @@ const OnboardingForm = () => {
   // Load saved data from localStorage
   const loadSavedData = () => {
     try {
-      console.log('🔄 Loading saved data from localStorage...');
       const savedData = localStorage.getItem('leadlines_onboarding_data');
       const savedVisited = localStorage.getItem('leadlines_onboarding_visited');
       const savedStep = localStorage.getItem('leadlines_onboarding_current_step');
       
-      console.log('📁 Found in localStorage:', {
-        savedData: savedData ? 'YES' : 'NO',
-        savedVisited: savedVisited ? 'YES' : 'NO', 
-        savedStep: savedStep ? 'YES' : 'NO'
-      });
-      
       if (savedData) {
-        console.log('✅ Setting form data from localStorage');
         setFormData(JSON.parse(savedData));
       }
       if (savedVisited) {
-        console.log('✅ Setting visited steps from localStorage');
         setVisitedSteps(new Set(JSON.parse(savedVisited)));
       }
       if (savedStep) {
-        console.log('✅ Setting current step from localStorage:', savedStep);
         setCurrentStep(parseInt(savedStep));
       }
     } catch (error) {
-      console.warn('❌ Failed to load saved onboarding data:', error);
+      console.warn('Failed to load saved onboarding data:', error);
     }
   };
 
@@ -173,17 +163,11 @@ const OnboardingForm = () => {
       setTimeout(() => {
         if (currentUser) {
           try {
-            console.log('💾 Saving data to localStorage...', {
-              formData: Object.keys(newFormData).length > 0 ? 'HAS_DATA' : 'EMPTY',
-              visitedSteps: visitedSteps.size,
-              currentStep
-            });
             localStorage.setItem('leadlines_onboarding_data', JSON.stringify(newFormData));
             localStorage.setItem('leadlines_onboarding_visited', JSON.stringify([...visitedSteps]));
             localStorage.setItem('leadlines_onboarding_current_step', currentStep.toString());
-            console.log('✅ Data saved to localStorage successfully');
           } catch (error) {
-            console.warn('❌ Failed to save onboarding data:', error);
+            console.warn('Failed to save onboarding data:', error);
           }
         }
       }, 100); // Debounce by 100ms
@@ -196,17 +180,11 @@ const OnboardingForm = () => {
   const saveProgressData = () => {
     if (currentUser) {
       try {
-        console.log('💾 Saving progress data...', {
-          formData: Object.keys(formData).length > 0 ? 'HAS_DATA' : 'EMPTY',
-          visitedSteps: visitedSteps.size,
-          currentStep
-        });
         localStorage.setItem('leadlines_onboarding_data', JSON.stringify(formData));
         localStorage.setItem('leadlines_onboarding_visited', JSON.stringify([...visitedSteps]));
         localStorage.setItem('leadlines_onboarding_current_step', currentStep.toString());
-        console.log('✅ Progress data saved successfully');
       } catch (error) {
-        console.warn('❌ Failed to save progress data:', error);
+        console.warn('Failed to save progress data:', error);
       }
     }
   };
@@ -249,7 +227,6 @@ const OnboardingForm = () => {
   };
 
   const handleSubmit = async (finalFormData) => {
-    console.log('🚀 handleSubmit called - Starting form submission...');
     setLoading(true);
     setIsSubmitting(true);
     setError('');
@@ -266,7 +243,6 @@ const OnboardingForm = () => {
       // Send to webhook (replace with your actual webhook URL)
       const webhookUrl = process.env.REACT_APP_ONBOARDING_WEBHOOK_URL || 'https://bluecraftleads.app.n8n.cloud/webhook/e5e2d7f2-2569-4f26-bfaa-1bf8ca0d6f32';
       
-      console.log('📡 Sending data to webhook...', webhookUrl);
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -279,29 +255,22 @@ const OnboardingForm = () => {
         throw new Error('Failed to submit onboarding data');
       }
 
-      console.log('✅ Webhook submission successful');
-
       // Mark onboarding as completed
-      console.log('📝 Marking onboarding as completed...');
       const success = await completeOnboarding(currentUser);
       if (!success) {
         throw new Error('Failed to mark onboarding as completed');
       }
 
-      console.log('✅ Onboarding marked as completed');
-
       // Clear saved progress
-      console.log('🗑️ Clearing localStorage after successful submission...');
       localStorage.removeItem('leadlines_onboarding_data');
       localStorage.removeItem('leadlines_onboarding_visited');
       localStorage.removeItem('leadlines_onboarding_current_step');
-      console.log('✅ localStorage cleared - redirecting to dashboard');
 
       // Redirect to dashboard
       navigate('/dashboard');
 
     } catch (error) {
-      console.error('❌ Error submitting onboarding:', error);
+      console.error('Error submitting onboarding:', error);
       setError('Failed to complete onboarding. Please try again.');
       setLoading(false);
       setIsSubmitting(false);
