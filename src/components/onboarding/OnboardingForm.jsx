@@ -17,7 +17,7 @@ import TechnicalSetupStep from './steps/TechnicalSetupStep';
 import GoalsFinalStep from './steps/GoalsFinalStep';
 
 const OnboardingForm = () => {
-  const { currentUser, completeOnboarding, checkOnboardingStatus } = useAuth();
+  const { currentUser, completeOnboarding, checkOnboardingStatus, logout } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
@@ -29,6 +29,8 @@ const OnboardingForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const sidebarRef = useRef(null);
   const saveTimeoutRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Step configuration with shortened titles for sidebar
   const steps = [
@@ -374,6 +376,44 @@ const OnboardingForm = () => {
     });
   };
 
+  // Get user's first initial for the profile circle
+  const getUserInitial = () => {
+    if (!currentUser) return 'U';
+    
+    // Try to get name from email first part
+    const emailName = currentUser.email.split('@')[0];
+    if (emailName) {
+      return emailName[0].toUpperCase();
+    }
+    
+    return 'U'; // Default if we can't get a proper initial
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setDropdownOpen(false);
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out', error);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   if (!currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -451,6 +491,30 @@ const OnboardingForm = () => {
                 {renderSidebarSteps()}
               </ul>
             </nav>
+
+            {/* Profile Icon with Sign Out */}
+            <div className="mt-auto relative" ref={dropdownRef}>
+              <button 
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full flex items-center justify-center p-2 hover:bg-secondary-dark rounded-md transition-colors"
+                aria-label="Profile menu"
+              >
+                <div className="w-10 h-10 rounded-full bg-accent text-text-dark flex items-center justify-center font-medium">
+                  {getUserInitial()}
+                </div>
+              </button>
+              
+              {dropdownOpen && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 mx-auto w-auto min-w-full bg-white rounded-md shadow-lg py-1 z-50">
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-text-dark hover:bg-gray-100"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
           </aside>
           
           {/* Main Content */}
