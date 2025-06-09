@@ -55,6 +55,15 @@ const TargetMarketStep = ({ onNext, onPrevious, formData, isFirstStep, isLastSte
       return;
     }
 
+    // Special validation for idealClientUrls - check for at least 5 URLs
+    if (stepData.idealClientUrls) {
+      const urlLines = stepData.idealClientUrls.split('\n').filter(line => line.trim().length > 0);
+      if (urlLines.length < 5) {
+        alert(`Please provide at least 5 ideal client URLs. You currently have ${urlLines.length}.\n\nEach URL should be on a separate line.`);
+        return;
+      }
+    }
+
     onNext(stepData);
   };
 
