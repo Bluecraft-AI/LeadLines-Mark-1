@@ -173,27 +173,103 @@ const GoalsFinalStep = ({ onNext, onPrevious, formData, isFirstStep, isLastStep,
       clearPendingSave();
     }
     
-    // Validation
-    const requiredFields = [
-      'primaryGoals',
-      'revenueGoals', 
-      'timelineExpectations'
-    ];
+    // First validate the current step (Goals & Final)
+    const currentStepRequiredFields = ['primaryGoal', 'additionalInfo'];
+    const currentStepMissingFields = currentStepRequiredFields.filter(field => !stepData[field]?.trim());
     
-    const missingFields = requiredFields.filter(field => !stepData[field]?.trim());
-    
-    if (missingFields.length > 0) {
+    if (currentStepMissingFields.length > 0) {
       const fieldDisplayNames = {
-        'primaryGoals': 'Primary Goals',
-        'revenueGoals': 'Revenue Goals',
-        'timelineExpectations': 'Timeline Expectations'
+        'primaryGoal': 'Primary Goal for Campaigns',
+        'additionalInfo': 'Anything Else We Should Know'
       };
       
-      const missingFieldNames = missingFields.map(field => fieldDisplayNames[field]);
-      alert(`Please fill in the following required fields:\n\n• ${missingFieldNames.join('\n• ')}`);
+      const missingFieldNames = currentStepMissingFields.map(field => fieldDisplayNames[field]);
+      alert(`Please fill in the following required fields in the current step:\n\n• ${missingFieldNames.join('\n• ')}`);
       return;
     }
-
+    
+    // Now validate ALL previous steps comprehensively
+    const allMissingFields = validateAllRequiredFields();
+    
+    if (allMissingFields.length > 0) {
+      // Group missing fields by step for better user experience
+      const stepNames = {
+        'Company Name': 'Company Fundamentals',
+        'Website URL': 'Company Fundamentals', 
+        'Primary Business Address': 'Company Fundamentals',
+        'Industry/Vertical': 'Company Fundamentals',
+        'Primary Contact Name': 'Company Fundamentals',
+        'Primary Contact Title': 'Company Fundamentals',
+        'Best Phone Number': 'Company Fundamentals',
+        'Best Email Address': 'Company Fundamentals',
+        
+        'Business Description (2-3 sentences)': 'Business Overview',
+        'Core Products/Services with Pricing': 'Business Overview',
+        'Average Sales Cycle Length': 'Business Overview',
+        'Initial Engagement Length': 'Business Overview',
+        'Average Client Lifetime': 'Business Overview',
+        'Renewal/Upsell/Downsell Opportunities': 'Business Overview',
+        'Problems You Solve for Clients': 'Business Overview',
+        'Client Transformation - Before State': 'Business Overview',
+        'Client Transformation - After State': 'Business Overview',
+        'Timeline to Results': 'Business Overview',
+        'Primary Benefit to Clients': 'Business Overview',
+        'Elevator Pitch': 'Business Overview',
+        
+        'Ideal Client Description': 'Target Market',
+        'URLs of 5+ Ideal Clients': 'Target Market',
+        'Target Job Titles': 'Target Market',
+        
+        'Top 3 Pain Points': 'Client Intelligence',
+        'Primary Goals/Desires': 'Client Intelligence',
+        'Triggers to Seek Your Solution': 'Client Intelligence',
+        'Frustrations with Competitors': 'Client Intelligence',
+        'Questions Prospects Would Respond To': 'Client Intelligence',
+        'Top 3 Objections and Responses': 'Client Intelligence',
+        
+        'Case Studies and Results': 'Social Proof',
+        
+        'Top 3-5 Competitors': 'Competitive Landscape',
+        'What Makes You Unique': 'Competitive Landscape',
+        
+        'Guarantee or Risk Reversal': 'Sales & Marketing',
+        'Lead Magnet Offers': 'Sales & Marketing',
+        
+        'Cold Email Sending Platform': 'Technical Setup',
+        'Email Hosting Provider': 'Technical Setup',
+        'Lead Data Source': 'Technical Setup',
+        'Clay.com Usage': 'Technical Setup',
+        'Marketing Automation Tools': 'Technical Setup',
+        'Help Needed': 'Technical Setup'
+      };
+      
+      // Group missing fields by step
+      const missingByStep = {};
+      allMissingFields.forEach(field => {
+        const stepName = stepNames[field] || 'Unknown Step';
+        if (!missingByStep[stepName]) {
+          missingByStep[stepName] = [];
+        }
+        missingByStep[stepName].push(field);
+      });
+      
+      // Create user-friendly error message
+      let errorMessage = "Please complete the following required fields before finishing onboarding:\n\n";
+      Object.entries(missingByStep).forEach(([stepName, fields]) => {
+        errorMessage += `${stepName}:\n`;
+        fields.forEach(field => {
+          errorMessage += `  • ${field}\n`;
+        });
+        errorMessage += '\n';
+      });
+      
+      errorMessage += "Please go back to the relevant steps and complete these fields, then return to finish your onboarding.";
+      
+      alert(errorMessage);
+      return;
+    }
+    
+    // All validation passed - proceed with submission
     onNext(stepData);
   };
 
