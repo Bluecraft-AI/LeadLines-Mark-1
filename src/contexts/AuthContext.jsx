@@ -6,7 +6,8 @@ import {
   onAuthStateChanged,
   updatePassword as firebaseUpdatePassword,
   EmailAuthProvider,
-  reauthenticateWithCredential
+  reauthenticateWithCredential,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { supabase } from '../config/supabase';
@@ -211,6 +212,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Reset password function
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      throw error;
+    }
+  };
+
   // Update password function
   const updatePassword = async (currentPassword, newPassword) => {
     if (!currentUser) {
@@ -218,21 +229,23 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // Re-authenticate user before changing password
-      const credential = EmailAuthProvider.credential(
-        currentUser.email,
-        currentPassword
-      );
-      
+      // Re-authenticate the user first
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
       await reauthenticateWithCredential(currentUser, credential);
       
-      // Update password
+      // Update the password
       await firebaseUpdatePassword(currentUser, newPassword);
-      
-      return true;
     } catch (error) {
       console.error("Error updating password:", error);
-      throw error;
+      
+      // Provide more specific error messages
+      if (error.code === 'auth/wrong-password') {
+        throw new Error('Current password is incorrect');
+      } else if (error.code === 'auth/weak-password') {
+        throw new Error('New password is too weak');
+      } else {
+        throw new Error('Failed to update password');
+      }
     }
   };
 
@@ -316,6 +329,7 @@ export const AuthProvider = ({ children }) => {
     signup,
     login,
     logout,
+    resetPassword,
     updatePassword,
     loading,
     updateUserSettings,
